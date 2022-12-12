@@ -30,7 +30,7 @@
         </div>
         <div class="navbar-nav ml-auto">
           {% if user.is_authenticated %}
-          <a class="nav-item nav-link" href="{% url 'accounts:create_project' %}">Create Project<a/>
+          <a class="nav-item nav-link" href="{% url 'accounts:create_instance_form' %}">Create Instance<a/>
           <a class="nav-item nav-link" href='#'>Create Bill<a/>
           <a class="nav-item nav-link" href="{% url 'accounts:logout' %}">Log Out<a/>
           {% else %}
