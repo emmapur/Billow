@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <title>Billow</title>
 
+
+    <link href="{% static 'billow/css/master.css' %}"  rel="stylesheet">
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
     integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
@@ -17,21 +19,22 @@
 
     <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
 
-    <link rel="stylesheet" href="{% static 'billow/css/master.css'%}">
+
 
 
   </head>
   <body>
+
 
     <nav class="navbar navbar-expand-lg bg-light mynav" role="navigation" id="navbar">
       <div class="container">
         <div class="navbar-nav align-items-center">
           <a class="navbar-brand mynav" href="{% url 'home' %}">Billow</a>
         </div>
-        <div class="navbar-nav ml-auto">
+        <div class="main_menu_side hidden-print main_menu">
           {% if user.is_authenticated %}
-          <a class="nav-item nav-link" href="{% url 'accounts:create_project' %}">Create Project<a/>
-          <a class="nav-item nav-link" href='#'>Create Bill<a/>
+          <a class="nav-item nav-link" href="{% url 'accounts:create_instance_form' %}">Create Instance<a/>
+          <a class="nav-item nav-link" href="{% url 'accounts:instance_list' %}" >Instances<a/>
           <a class="nav-item nav-link" href="{% url 'accounts:logout' %}">Log Out<a/>
           {% else %}
           <a class="nav-item nav-link" href="{% url 'accounts:login' %}">Log in</a>

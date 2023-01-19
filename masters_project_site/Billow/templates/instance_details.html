@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block content %}
+        <!-- page content -->
+
+    	{% if messages %}
+    	<ul class="messages">
+    	  {% for message in messages %}
+
+    	  <div class="alert alert-primary">
+    	    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times</a>
+    	     	{{ message }}
+    	  </div>
+
+    	  {% endfor %}
+    	</ul>
+    	{% endif %}
+
+            <div class="clearfix"></div>
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                  <div class="x_title">
+                    <h2>Instance Details</h2>
+                    <div class="clearfix"></div>
+                  </div>
+                  <div class="x_content">
+                    <br />
+
+                    <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{% url 'accounts:delete_instance' %}" method="get">
+	                
+                      <div class="form-group">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12">Instance ID<span class="required">*</span></label>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <td class="form-control" name="cloud_prov_name" id ="cloud_prov_name">
+                        {% for instance in data %}
+                          <tr>{{ instance.cloud_provider}}</tr>
+                        {% endfor %}
+                        </td>
+                     </div>
+                    </div>
+      
+
+
+                    <div class="form-group">
+                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Instance Name</label></b>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <td class="form-control" name="instance_name" id ="instance_name">
+                         {% for instance in data %}
+                          <tr>{{instance.instance_name}}</tr>
+                        {% endfor %}
+
+                     </div>
+                    </div>
+
+                    <div class="form-group">
+                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Team</label></b>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <td class="form-control" name="instance_name" id ="instance_name">
+                         {% for instance in data %}
+                          <tr>{{instance.team}}</tr>
+                        {% endfor %}
+                      </div>
+                     </div>
+
+                     <div class="form-group">
+                       <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Conatct</label></b>
+                       <div class="col-md-4 col-sm-4 col-xs-12">
+                         <td class="form-control" name="instance_name" id ="instance_name">
+                          {% for instance in data %}
+                           <tr>{{instance.contact}}</tr>
+                         {% endfor %}
+                      </div>
+                    </div>
+
+
+                    <div class="form-group">
+                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">User</label></b>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <td class="form-control" name="instance_name" id ="instance_name">
+                         {% for instance in data %}
+                          <tr>{{instance.users}}</tr>
+                        {% endfor %}
+                     </div>
+                   </div>
+
+
+                   <div class="form-group">
+                     <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Instance Type</label></b>
+                     <div class="col-md-4 col-sm-4 col-xs-12">
+                       <td class="form-control" >
+                        {% for instance in data %}
+                         <tr>{{instance.flavor__flavor_name}}</tr>
+                       {% endfor %}
+                    </div>
+                  </div>
+
+
+                  <div class="form-group">
+                    <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Image</label></b>
+                    <div class="col-md-4 col-sm-4 col-xs-12">
+                      <td class="form-control" name="instance_name" id ="instance_name">
+                        {% for instance in data %}
+                        <tr>{{instance.Image}}</tr>
+                      {% endfor %}
+                   </div>
+                 </div>
+
+                 <div class="form-group">
+                   <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Key Name</label></b>
+                   <div class="col-md-4 col-sm-4 col-xs-12">
+                     <td class="form-control" name="instance_name" id ="instance_name">
+                       {% for instance in data %}
+                       <tr>{{instance.KeyName}}</tr>
+                     {% endfor %}
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <b><label class="control-label col-md-3 col-sm-3 col-xs-12">CPU</label></b>
+                  <div class="col-md-4 col-sm-4 col-xs-12">
+                    <td class="form-control" name="instance_name" id ="instance_name">
+                      {% for instance in data %}
+                      <tr>{{instance.flavor__CPU}}</tr>
+                    {% endfor %}
+                 </div>
+               </div>
+
+
+
+               <div class="form-group">
+                 <label class="control-label col-md-3 col-sm-3 col-xs-12">Instance ID<span class="required">*</span></label>
+                 <div class="col-md-4 col-sm-4 col-xs-12">
+                   <td class="form-control" name="id_instance" id ="id_instance">
+                   {% for instance in data %}
+                     <tr>{{ instance.id_instance}}</tr>
+                   {% endfor %}
+                   </td>
+                </div>
+               </div>
+
+               
+            
+
+
+
+                        <div class="ln_solid"></div>
+                        <div class="form-group">
+                          <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+  						  <button class="btn btn-danger" type="submit">Delete Instance</button>
+                <button class="btn btn-success" type="submit">Start</button>
+                <button class="btn btn-warning" type="submit">Stop</button>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endblock %}
+          <!-- /page content -->

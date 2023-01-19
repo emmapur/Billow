@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block content %}
+        <!-- page content -->
+
+      <script>
+        function change()
+        {
+          var provider = document.getElementById("cloud_prov_name");
+         
+          if(provider.value == "Amazon")
+          {
+           
+            document.getElementById("Image_ID").style.display="none";
+            document.getElementById("Openstack_Network_id").style.display="none";
+        
+          }
+          else
+          {
+           
+            document.getElementById("Image_ID").style.display="block";
+            document.getElementById("Openstack_Network_id").style.display="block";
+          }
+          if(provider.value == "OpenStack")
+          {
+            document.getElementById("key_name").style.display="none";
+            document.getElementById("Image_name").style.display="none";
+        
+          }
+          else
+          {
+            document.getElementById("key_name").style.display="block";
+            document.getElementById("Image_name").style.display="block";
+            
+          }
+        }
+      </script>
+
+    	{% if messages %}
+    	<ul class="messages">
+    	  {% for message in messages %}
+
+    	  <div class="alert alert-primary">
+    	    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times</a>
+    	     	{{ message }}
+    	  </div>
+
+    	  {% endfor %}
+    	</ul>
+    	{% endif %}
+<body onload="change()">
+  
+
+            <div class="clearfix"></div>
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                  <div class="x_title">
+                    <h2>Create a new Instance</h2>
+                    <div class="clearfix"></div>
+                  </div>
+                  <div class="x_content">
+                    <br />
+
+                    <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{% url 'accounts:create_new_instance' %}" method="post">
+	                  <div class="form-group">
+	                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Cloud Provider</label>
+	                    <div class="col-md-4 col-sm-4 col-xs-12">
+	                      <select class="form-control" name="cloud_prov_name" id ="cloud_prov_name" onchange="change()">
+	                      {% for cloud_provider in cloud_providers_list %}
+	                      	<option value={{cloud_provider.cloud_prov_name}}>{{ cloud_provider.cloud_prov_name }}</option>
+                        
+
+	                      {% endfor %}
+	                      </select>
+	                   </div>
+	                  </div>
+
+
+                      <div class="form-group">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="instance_name">Instance Name <span class=></span>
+                      </label>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <input type="text" id="instance_name" name="instance_name" class="form-control col-md-7 col-xs-12">
+                      </div>
+                    </div>
+
+                
+
+
+
+
+
+
+                    <div class="form-group" name="program_name" id ="program_name">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12">Program <span class="required">*</span></label>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <select class="form-control" name="program_name" id ="program_name">
+                        {% for Program in program_name_list %}
+                          <option>{{ Program.program_name}}</option>
+                        {% endfor %}
+                        </select>
+                     </div>
+                    </div>
+
+
+
+
+                        <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="Team">Team <span class=></span>
+                        </label>
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                          <select class="form-control" name="team_name" id ="team_name">
+                          {% for Team in team_name_list %}
+                            <option>{{ Team.team_name}}</option>
+                          {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                    <div class="form-group">
+  								<label class="control-label col-md-3 col-sm-3 col-xs-12"
+  									for="contact1">Contact<span class="required">*</label>
+  								<div class="col-md-8 col-sm-8 col-xs-12">
+  									<input type="text" class="form-control col-sm-4 col-xs-12" id="contact_name" name="contact_name" placeholder="example@gmail.com" required="required" />
+  								</div>
+  							</div>
+
+
+                <div class="form-group">
+                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="User">User <span class=></span>
+                </label>
+                <div class="col-md-4 col-sm-4 col-xs-12">
+                  <select class="form-control" name="username" id ="username">
+                  {% for User in users_list %}
+                    <option>{{ User.username}}</option>
+                  {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+                      <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12">Instance Type<span class="required">*</span></label>
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                          <select class="form-control" name="flavor_name" id ="flavor_name">
+                          {% for Flavor in flavor_list %}
+                            <option>{{ Flavor.flavor_name}}</option>
+                          {% endfor %}
+                          </select>
+                       </div>
+                      </div>
+                      <div class="form-group" name="Image_name" id ="Image_name">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12">Image <span class="required">*</span></label>
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                          <select class="form-control" name="Image_name" id ="Image_name">
+                          {% for Image in ImageID_list %}
+                            <option>{{ Image.Image_name}}</option>
+                          {% endfor %}
+                          </select>
+                       </div>
+                      </div>
+
+                      <div class="form-group"  name="key_name" id ="key_name">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12">Key Name<span class="required">*</span></label>
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                          <select class="form-control" name="key_name" id ="key_name">
+                          {% for Key in KeyName_list %}
+                            <option>{{ Key.key_name}}</option>
+                          {% endfor %}
+                          </select>
+                       </div>
+                      </div>
+
+                      
+                    <div class="form-group" name="Image_ID" id ="Image_ID">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12">Image ID <span class="required">*</span></label>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <select class="form-control" name="Image_ID" id ="Image_ID">
+                        {% for Openstack_image in Openstack_image_list %}
+                          <option>{{ Openstack_image.Image_ID}}</option>
+                        {% endfor %}
+                        </select>
+                     </div>
+                    </div>
+
+                    <div class="form-group" name="Openstack_Network_id" id ="Openstack_Network_id">
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12">Network ID <span class="required">*</span></label>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <select class="form-control" name="Openstack_Network_id" id ="Openstack_Network_id">
+                        {% for Openstack_Network in Openstack_Network_list %}
+                          <option>{{ Openstack_Network.Openstack_Network_id}}</option>
+                        {% endfor %}
+                        </select>
+                     </div>
+                    </div>
+
+                        <div class="ln_solid"></div>
+                        <div class="form-group">
+                          <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+  						  <button class="btn btn-primary" type="reset">Reset</button>
+                            <button type="submit" class="btn btn-success">Submit</button>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+          {% endblock %}
+          <!-- /page content -->
