@@ -35,6 +35,9 @@
           {% if user.is_authenticated %}
           <a class="nav-item nav-link" href="{% url 'accounts:create_instance_form' %}">Create Instance<a/>
           <a class="nav-item nav-link" href="{% url 'accounts:instance_list' %}" >Instances<a/>
+          <a class="nav-item nav-link" href="{% url 'accounts:billing' %}" >Billing<a/>
+          <a class="nav-item nav-link" href="{% url 'accounts:created_bill' %}" >View Bills<a/>
+            
           <a class="nav-item nav-link" href="{% url 'accounts:logout' %}">Log Out<a/>
           {% else %}
           <a class="nav-item nav-link" href="{% url 'accounts:login' %}">Log in</a>

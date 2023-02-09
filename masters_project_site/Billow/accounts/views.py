@@ -10,6 +10,11 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import *
 from .Cloud_utils import*
 from django.contrib import messages
+from .decorators import users_allowed
+
+
+
+
 # Create your views here.
 class Login(CreateView):
     form_class = forms.UserCreateForm
@@ -19,12 +24,48 @@ class Login(CreateView):
 
 @csrf_exempt
 def instance_list(request):
-    context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
+   
+   
+    team_name = UserProfile.objects.get(user_name = request.user).team_name
+    print(team_name)
+
+
+
+    allowed_roles = ['admin']
+    if request.user.groups.exists():
+        group = request.user.groups.all()[0].name
+
+    if group in allowed_roles:
+       context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
                                'CPU (Total)', 'RAM (GiB)',
                                'Storage (GiB)', 'State', 'Created At']}
 
-    instance_list = Instance.objects.values('cloud_provider', 'flavor__CPU', 'flavor__Ram', 'flavor__Storage', 'team', 'program', 'instance_name','flavor__flavor_name', 'launch_time')
-    context['data'] = instance_list
+       instance_list = Instance.objects.values('cloud_provider', 'flavor__CPU', 'flavor__Ram', 'flavor__Storage', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
+       context['data'] = instance_list
+    else:
+        context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
+                               'CPU (Total)', 'RAM (GiB)',
+                               'Storage (GiB)', 'State', 'Created At']}
+        instance_list = Instance.objects.filter(team__team_name = team_name).values('cloud_provider', 'flavor__CPU', 'flavor__Ram', 'flavor__Storage', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
+        context['data'] = instance_list
+
+    #if group in program_roles = ['program1']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     return render(request, 'instance_list.html', context)
 
@@ -54,14 +95,17 @@ def instance_details(request):
 def delete_instance(request):
   
     cloud_provider = request.GET.get('cloud_prov_name')
-    
     instance_id = request.GET.get('id_instance')
+
+    
     print(cloud_provider)
 
     params = {
         'aws_instance_id':instance_id,
         'id_instance':instance_id
     }
+
+    synch_op_cloud()
 
 
     if (cloud_provider == 'OpenStack'):
@@ -77,6 +121,7 @@ def delete_instance(request):
 
 
 @csrf_exempt
+@users_allowed(allowed_roles=['admin'])
 def create_new_instance_form(request):
     cloud_providers_list = Cloud_Provider.objects.all()
     flavor_list = Flavor.objects.all()
@@ -85,7 +130,7 @@ def create_new_instance_form(request):
     instance_name_list = Instance.objects.all()
     team_name_list = Team.objects.all()
     program_name_list = Program.objects.all()
-    users_list = User.objects.all()
+    users_list = UserProfile.objects.all()
     Openstack_Network_list = Openstack_Network.objects.all()
     Openstack_image_list = Openstack_image.objects.all()
 
@@ -149,17 +194,107 @@ def create_new_instance(request):
         'openstack_image_id' : Openstack_image
     }
 
-    try:
-        if (cloud_provider == 'OpenStack'):
+  #  try:
+    if (cloud_provider == 'OpenStack'):
              create_openstack_instance(params)
-        else:
+    else:
             create_aws_instance(params)
 
 
-    except Exception as e:
-        print ("||view||create_new_instance error:" + str(e))
-        messages.error(request, "Instance request failed to submit. Error: " + str(e))
-        return HttpResponseRedirect(reverse('accounts:create_instance_form'))
+   # except Exception as e:
+     #   print ("||view||create_new_instance error:" + str(e))
+     #   messages.error(request, "Instance request failed to submit. Error: " + str(e))
+     #   return HttpResponseRedirect(reverse('accounts:create_instance_form'))
 
-    messages.success(request, "Instance created successfully!")
+   # messages.success(request, "Instance created successfully!")
     return HttpResponseRedirect(reverse('accounts:instance_list'))
+
+
+
+
+
+@csrf_exempt
+def create_bill_form(request):
+    team_name_list = Team.objects.all()
+    program_name_list = Program.objects.all()
+
+
+    context = {
+       
+        'team_name_list' : team_name_list,
+        'program_name_list' : program_name_list,
+    }
+
+
+
+    return render(request, 'billing.html', context)
+
+
+@csrf_exempt
+def create_bill(request):
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
+    team  = request.POST.get('team_name')
+    program = request.POST.get('program_name')
+
+
+    params = {
+        'team':team,
+        'program':program,
+        'start_date':start_date,
+        'end_date':end_date,
+       
+    }
+
+    create_bill_aws(params)
+
+
+
+    return HttpResponseRedirect(reverse('accounts:created_bill'))
+
+
+
+
+
+
+@csrf_exempt
+def created_bill(request):
+    context = {"columns": ['Program',  'Team', 'Start Date',
+                               'End Date', 'Total Cost', 'Unit']}
+
+    created_bill = Bill.objects.values('program', 'team', 'start_date', 'end_date', 'total_cost', 'Unit')
+    context['data'] = created_bill
+
+
+    allowed_roles = ['admin']
+    if request.user.groups.exists():
+        group = request.user.groups.all()[0].name
+    if group in allowed_roles:
+       context = {"columns": ['Program', 'Start Date',
+                               'End Date', 'Total Cost', 'Unit']}
+
+       created_bill = Bill.objects.values('program', 'team', 'start_date', 'end_date', 'total_cost', 'Unit')
+       context['data'] = created_bill
+    else:
+        context = {"columns": ['Program', 'Start Date',
+                               'End Date', 'Total Cost', 'Unit']}
+        created_bill = Bill.objects.values('program', 'start_date', 'end_date', 'total_cost', 'Unit')
+        context['data'] = created_bill
+
+
+
+    return render(request, 'created_bill.html', context)
+
+
+
+
+@csrf_exempt
+def created_bill_program_man(request):
+
+    context = {"columns": ['Program',  'Team', 'Start Date',
+                               'End Date', 'Total Cost', ]}
+
+    created_bill = Bill.objects.values('program', 'team' 'end_date', 'total_cost', 'Unit')
+    context['data'] = created_bill
+
+    return render(request, 'created_bill.html', context)

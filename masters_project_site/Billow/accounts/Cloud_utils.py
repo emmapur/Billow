@@ -71,9 +71,9 @@ def create_aws_instance(params):
         Image=params['Image'],
         KeyName=params['aws_key_name'],
         instance_name=params['instance_name'],
-        team=params['team'],
-        program=params['program'],
-        users=params['users'],
+        team=Team.objects.get(team_name=params['team']),
+        program=Program.objects.get(program_name=params['program']),
+        users=UserProfile.objects.get(user_name=params['users']),
         contact=params['contact'],
         id_instance=instance_id,
         launch_time=launch_time
@@ -176,8 +176,8 @@ def create_openstack_instance(params):
     nova.servers.create(name = params['instance_name'], image = params['openstack_image_id'], flavor = params['openstack_flavor_id'],  nics = [{'net-id': params['openstack_network_id']}])
     instance_list = []
     instances = (nova.servers.list())
-    for instances in instances:
-        instances = instances.id
+    for server in instances:
+        instances = server.id
         li = (instances.split(" "))
     #print(li.append)
         instance_list.append(li)    
@@ -223,3 +223,91 @@ def delete_db_instance_op(instance_id):
     Instance_obj = Instance.objects.get(id_instance=instance_id)
     Instance_obj.delete()
 
+
+
+def synch_op_cloud():
+    #Cloud_Provider=OpenStack
+    instance_db = Instance.objects.filter(cloud_provider='OpenStack').values_list('instance_name', flat=True)
+
+    
+    clients = get_clients('admin')
+    
+    nova = clients['nova']
+
+    instance_list = []
+    instances = (nova.servers.list())
+    for server in instances:
+         instance = server.name
+         instance_list.append(instance)
+
+   
+
+    list_to_add = list(set(instance_list) - set(instance_db))
+    instance_name_add = list_to_add[0]
+
+    instance_list = []
+    instances = (nova.servers.list(instance_name_add))
+    for server in instances:
+        instance = server.name
+        instance_flavor = server.flavor['id']
+        instance_image = server.image['id']
+        instance_id = server.id
+
+    
+    flavor_name = Flavor.objects.filter(id_flavor = instance_flavor).values_list('flavor_name', flat=True)
+    print(flavor_name)
+    Instance_object = Instance(
+        cloud_provider= 'Openstack',
+        flavor=flavor_name,
+        Image= instance_image,
+        instance_name= instance_name_add,
+        id_instance=instance_id
+    )
+    
+    Instance_object.save()
+      
+
+    
+
+def create_bill_aws(params):
+    client = boto3.client(
+    'ce', 
+    aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
+    aws_secret_access_key='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',
+    #aws_session_token=SESSION_TOKEN
+    region_name = 'us-east-1')
+
+
+    response = client.get_cost_and_usage(
+        TimePeriod={
+            'Start': params['start_date'],
+            'End': params['end_date'],
+        },
+        Granularity='MONTHLY',
+
+        Metrics=[
+            'NetAmortizedCost',
+        ]
+)
+
+    print(response['ResultsByTime'])
+
+    for cost in response['ResultsByTime']:
+    #print(cost)
+        Total = (cost['Total'])
+        all_cost  = Total['NetAmortizedCost']
+        total_cost = all_cost['Amount']
+        Unit = all_cost['Unit']
+
+
+    bill_object = Bill(
+    program = params['program'],
+    team= params['team'],
+    start_date=params['start_date'],
+    end_date=params['end_date'],
+    total_cost = total_cost,
+    Unit = Unit
+    )
+  
+    bill_object.save()
+    

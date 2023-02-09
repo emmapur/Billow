@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+        <!-- page content -->
+
+      <script>
+        function change()
+        {
+          var provider = document.getElementById("cloud_prov_name");
+         
+          if(provider.value == "Amazon")
+          {
+           
+            document.getElementById("Image_ID").style.display="none";
+            document.getElementById("Openstack_Network_id").style.display="none";
+        
+          }
+          else
+          {
+           
+            document.getElementById("Image_ID").style.display="block";
+            document.getElementById("Openstack_Network_id").style.display="block";
+          }
+          if(provider.value == "OpenStack")
+          {
+            document.getElementById("key_name").style.display="none";
+            document.getElementById("Image_name").style.display="none";
+        
+          }
+          else
+          {
+            document.getElementById("key_name").style.display="block";
+            document.getElementById("Image_name").style.display="block";
+            
+          }
+        }
+      </script>
+
+    	{% if messages %}
+    	<ul class="messages">
+    	  {% for message in messages %}
+
+    	  <div class="alert alert-primary">
+    	    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times</a>
+    	     	{{ message }}
+    	  </div>
+
+    	  {% endfor %}
+    	</ul>
+    	{% endif %}
+<body >
+  
+
+            <div class="clearfix"></div>
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                  <div class="x_title">
+                    <h2>Create Bill</h2>
+                    <div class="clearfix"></div>
+                  </div>
+                  <div class="x_content">
+                    <br />
+
+                    <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{% url 'accounts:create_bill' %}" method="post">
+	                  <div class="form-group">
+                        <div class="form-group">
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="instance_name">Start Date <span class=></span>
+                            </label>
+                            <div class="col-md-4 col-sm-4 col-xs-12">
+                              <input type="text" id="start_date" name="start_date" class="form-control col-md-7 col-xs-12" placeholder="yyyy-mm-dd" required="required">
+                            </div>
+                          </div>
+      
+	                   </div>
+	                  </div>
+
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="instance_name">End Date <span class=></span>
+                      </label>
+                      <div class="col-md-4 col-sm-4 col-xs-12">
+                        <input type="text" id="end_date" name="end_date" class="form-control col-md-7 col-xs-12" placeholder="yyyy-mm-dd" required="required">
+                      </div>
+                    </div>
+
+                 </div>
+                </div>
+
+                        <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="Team">Team <span class=></span>
+                        </label>
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                          <select class="form-control" name="team_name" id ="team_name">
+                          {% for Team in team_name_list %}
+                            <option>{{ Team.team_name}}</option>
+                          {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="Team">Program <span class=></span>
+                        </label>
+                        <div class="col-md-4 col-sm-4 col-xs-12">
+                          <select class="form-control" name="program_name" id ="program_name">
+                          {% for Program in program_name_list %}
+                            <option>{{ Program.program_name}}</option>
+                          {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+
+                        <div class="ln_solid"></div>
+                        <div class="form-group">
+                          <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+  						  <button class="btn btn-primary" type="reset">Reset</button>
+                            <button type="submit" class="btn btn-success">Submit</button>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+          {% endblock %}
+          <!-- /page content -->

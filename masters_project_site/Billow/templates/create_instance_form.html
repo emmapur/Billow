@@ -131,8 +131,8 @@
                 </label>
                 <div class="col-md-4 col-sm-4 col-xs-12">
                   <select class="form-control" name="username" id ="username">
-                  {% for User in users_list %}
-                    <option>{{ User.username}}</option>
+                  {% for UserProfile in users_list %}
+                    <option>{{ UserProfile.user.username}}</option>
                   {% endfor %}
                   </select>
                 </div>
