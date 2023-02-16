@@ -7,18 +7,18 @@
         {
           var provider = document.getElementById("cloud_prov_name");
          
-          if(provider.value == "Amazon")
+          if(provider.value == "AWS")
           {
            
             document.getElementById("Image_ID").style.display="none";
-            document.getElementById("Openstack_Network_id").style.display="none";
+          
         
           }
           else
           {
            
             document.getElementById("Image_ID").style.display="block";
-            document.getElementById("Openstack_Network_id").style.display="block";
+          
           }
           if(provider.value == "OpenStack")
           {
@@ -182,16 +182,7 @@
                      </div>
                     </div>
 
-                    <div class="form-group" name="Openstack_Network_id" id ="Openstack_Network_id">
-                      <label class="control-label col-md-3 col-sm-3 col-xs-12">Network ID <span class="required">*</span></label>
-                      <div class="col-md-4 col-sm-4 col-xs-12">
-                        <select class="form-control" name="Openstack_Network_id" id ="Openstack_Network_id">
-                        {% for Openstack_Network in Openstack_Network_list %}
-                          <option>{{ Openstack_Network.Openstack_Network_id}}</option>
-                        {% endfor %}
-                        </select>
-                     </div>
-                    </div>
+                   
 
                         <div class="ln_solid"></div>
                         <div class="form-group">

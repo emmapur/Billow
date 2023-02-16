@@ -4,3 +4,7 @@ body {
   background-color: green;
   color:blue;
 }
+caption{
+  clear: both;
+  color: red;
+}

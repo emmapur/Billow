@@ -17,6 +17,8 @@ from django.contrib import admin
 from django.urls import path, re_path
 from django.conf.urls import include
 from . import views #go to current directory and grab views from there
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,7 +27,6 @@ urlpatterns = [
     re_path(r'^accounts/', include('django.contrib.auth.urls')),
     re_path(r'^test/$', views.TestPage.as_view(), name='test'),
     re_path(r'^thanks/$', views.ThanksPage.as_view(), name='thanks'),
+    
 
-
-
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

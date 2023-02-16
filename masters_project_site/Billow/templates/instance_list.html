@@ -45,7 +45,8 @@
 
 
                       <td><a href="{% url 'accounts:instance_details' %}?instance_details={{instance.instance_name}}">{{instance.instance_name}} </a></td>
-	                      	<td>{{instance.cloud_provider}}</td>
+
+	                      	<td>{{instance.cloud_provider__cloud_prov_name}}</td>
 	                      	<td>{{instance.program__program_name}}</td>
 	                      	<td>{{instance.team__team_name}}</td>
                           <td>{{instance.flavor__flavor_name}}</td>

@@ -27,11 +27,13 @@ def instance_list(request):
    
    
     team_name = UserProfile.objects.get(user_name = request.user).team_name
-    print(team_name)
+    program_name = UserProfile.objects.get(user_name = request.user).program_name
 
 
 
     allowed_roles = ['admin']
+    program_roles = ['program_manager']
+
     if request.user.groups.exists():
         group = request.user.groups.all()[0].name
 
@@ -40,13 +42,19 @@ def instance_list(request):
                                'CPU (Total)', 'RAM (GiB)',
                                'Storage (GiB)', 'State', 'Created At']}
 
-       instance_list = Instance.objects.values('cloud_provider', 'flavor__CPU', 'flavor__Ram', 'flavor__Storage', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
+       instance_list = Instance.objects.values('cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram', 'flavor__Storage', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
        context['data'] = instance_list
+    elif group in program_roles:
+        context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
+                               'CPU (Total)', 'RAM (GiB)',
+                               'Storage (GiB)', 'State', 'Created At']}
+        instance_list = Instance.objects.filter(program__program_name = program_name).values('cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram', 'flavor__Storage', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
+        context['data'] = instance_list
     else:
         context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
                                'CPU (Total)', 'RAM (GiB)',
                                'Storage (GiB)', 'State', 'Created At']}
-        instance_list = Instance.objects.filter(team__team_name = team_name).values('cloud_provider', 'flavor__CPU', 'flavor__Ram', 'flavor__Storage', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
+        instance_list = Instance.objects.filter(team__team_name = team_name).values('cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram', 'flavor__Storage', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
         context['data'] = instance_list
 
     #if group in program_roles = ['program1']
@@ -105,7 +113,8 @@ def delete_instance(request):
         'id_instance':instance_id
     }
 
-    synch_op_cloud()
+    take_snapshot_instance()
+    get_snapshots()
 
 
     if (cloud_provider == 'OpenStack'):
@@ -131,7 +140,7 @@ def create_new_instance_form(request):
     team_name_list = Team.objects.all()
     program_name_list = Program.objects.all()
     users_list = UserProfile.objects.all()
-    Openstack_Network_list = Openstack_Network.objects.all()
+
     Openstack_image_list = Openstack_image.objects.all()
 
     context = {
@@ -143,7 +152,7 @@ def create_new_instance_form(request):
         'team_name_list' : team_name_list,
         'program_name_list' : program_name_list,
         'users_list' : users_list,
-        'Openstack_Network_list' : Openstack_Network_list,
+    
         'Openstack_image_list': Openstack_image_list,
 
     }
@@ -168,7 +177,7 @@ def create_new_instance(request):
     program  = request.POST.get('program_name')
     contact = request.POST.get('contact_name')
     users =  request.POST.get('username')
-    Openstack_Network = request.POST.get('Openstack_Network_id')
+ 
     Openstack_image = request.POST.get('Image_ID')
     flavor_name = request.POST.get('flavor_name') 
     flavor_id = Flavor.objects.values_list('id_flavor', flat=True).get(flavor_name=flavor_name)
@@ -190,7 +199,7 @@ def create_new_instance(request):
         'flavor':flavor_name,
         'Image': Image,
         'openstack_flavor_id' : flavor_id,
-        'openstack_network_id' : Openstack_Network,
+    
         'openstack_image_id' : Openstack_image
     }
 
@@ -259,31 +268,92 @@ def create_bill(request):
 
 @csrf_exempt
 def created_bill(request):
-    context = {"columns": ['Program',  'Team', 'Start Date',
-                               'End Date', 'Total Cost', 'Unit']}
 
-    created_bill = Bill.objects.values('program', 'team', 'start_date', 'end_date', 'total_cost', 'Unit')
-    context['data'] = created_bill
-
+    team_name = UserProfile.objects.get(user_name = request.user).team_name
+    program_name = UserProfile.objects.get(user_name = request.user).program_name
 
     allowed_roles = ['admin']
+    program_roles = ['program_manager']
+
     if request.user.groups.exists():
         group = request.user.groups.all()[0].name
-    if group in allowed_roles:
-       context = {"columns": ['Program', 'Start Date',
-                               'End Date', 'Total Cost', 'Unit']}
 
-       created_bill = Bill.objects.values('program', 'team', 'start_date', 'end_date', 'total_cost', 'Unit')
-       context['data'] = created_bill
+    if group in allowed_roles:
+        
+        bill = {}
+
+        created_bill = Bill.objects.values('program__program_name', 'team__team_name', 'start_date', 'end_date', 'total_cost', 'Unit', 'bill_name__instance_name')
+        bill['data'] = created_bill
+
+        total = 0
+        for cost in bill['data']:
+            
+            total += int(cost['total_cost'])
+        new_total = total
+
+        context={
+            'total_cost': new_total,
+            'data': created_bill,
+            "columns": ['Program',  'Team', 'Start Date',
+                               'End Date', 'Total Cost', 'Unit']
+        }
+
+    elif group in program_roles:
+        
+        bill = {}
+        created_bill = Bill.objects.filter(program__program_name =program_name ).values('program__program_name', 'team__team_name', 'start_date', 'end_date', 'total_cost', 'Unit', 'bill_name__instance_name')
+        bill['data'] = created_bill
+
+        total = 0
+        for cost in bill['data']:
+            
+            total += int(cost['total_cost'])
+        new_total = total
+
+        context={
+            'total_cost': new_total,
+            'data': created_bill,
+            "columns": ['Program',  'Team', 'Start Date',
+                               'End Date', 'Total Cost', 'Unit']
+        }
+
     else:
-        context = {"columns": ['Program', 'Start Date',
-                               'End Date', 'Total Cost', 'Unit']}
-        created_bill = Bill.objects.values('program', 'start_date', 'end_date', 'total_cost', 'Unit')
-        context['data'] = created_bill
+       
+        bill = {}
+        created_bill = Bill.objects.filter(team__team_name = team_name ).values('program__program_name', 'team__team_name', 'start_date', 'end_date', 'total_cost', 'Unit', 'bill_name__instance_name')
+        bill['data'] =  created_bill
+        #context[]
+      
+        total = 0
+        for cost in bill['data']:
+            
+            total += int(cost['total_cost'])
+        new_total = total
+
+        context={
+            'total_cost': new_total,
+            'data': created_bill,
+            "columns": ['Program',  'Team', 'Start Date',
+                               'End Date', 'Total Cost', 'Unit']
+        }
+
+
+
 
 
 
     return render(request, 'created_bill.html', context)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -296,5 +366,9 @@ def created_bill_program_man(request):
 
     created_bill = Bill.objects.values('program', 'team' 'end_date', 'total_cost', 'Unit')
     context['data'] = created_bill
+
+
+
+    
 
     return render(request, 'created_bill.html', context)

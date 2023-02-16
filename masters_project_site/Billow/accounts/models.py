@@ -37,6 +37,8 @@ class UserProfile(models.Model):
     user = models.ForeignKey(User,  on_delete=models.PROTECT)
     user_name = models.CharField(max_length=64, blank=False, null=True)
     team_name = models.ForeignKey(Team, on_delete=models.PROTECT, null=True)
+    program_name = models.ForeignKey(Program, on_delete=models.PROTECT, null=True)
+
     def __str__(self):
         return self.user.username
 
@@ -76,14 +78,6 @@ class Image(models.Model):
     def __str__(self):
         return self.Image_name
 
-class Openstack_Network(models.Model):
-    Openstack_Network_name = models.CharField(max_length=64)
-    Openstack_Network_id = models.CharField(max_length=64)
-
-    def __str__(self):
-        return self.Openstack_Network_name
-
-
 
 class Key(models.Model):
     key_name = models.CharField(max_length=64)
@@ -92,43 +86,91 @@ class Key(models.Model):
     def __str__(self):
         return self.key_name
 
-class id_instance(models.Model):
-    id_instance_name = models.CharField(max_length=64)
 
-    def __str__(self):
-        return self.id_instance_name
 
 class Instance(models.Model):
 
-    cloud_provider = models.CharField(max_length=64)
+    cloud_provider = models.ForeignKey(Cloud_Provider, on_delete=models.PROTECT, null=True)
     instance_name = models.CharField(max_length=64, unique=True)
     team = models.ForeignKey(Team, on_delete=models.PROTECT, null=True)
     
     program = models.ForeignKey(Program, on_delete=models.PROTECT, null=True)
-    contact = models.CharField(max_length=64)
+    contact = models.CharField(max_length=64, unique=False)
  
     Image = models.CharField(max_length=64)
-    KeyName = models.CharField(max_length=64)
+    KeyName =  models.ForeignKey(Key, on_delete=models.PROTECT, null=True)
+
     flavor = models.ForeignKey(Flavor, on_delete=models.PROTECT, null=True)
     users = models.ForeignKey(UserProfile, on_delete=models.PROTECT, null=True)
-    contact = models.CharField(max_length=64, unique=True)
+
+
     id_instance = models.CharField(max_length=64, unique=True)
     launch_time = models.CharField(max_length=64, null=True)
-    openstack_flavor_id = models.CharField(max_length=64, null=True)
-    network = models.CharField(max_length=64, unique=True)
+    id_flavour = models.CharField(max_length=64, null=True)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    
+
+
+    
+
+    def __str__(self):
+        return str(self.instance_name)
+
+
+class Instance_snap_ind(models.Model):
+    timestamp = models.DateTimeField(editable=False)
+    hash_key = models.CharField(max_length=64, default=None)  # hash of timestamp
+  #  active = models.BooleanField(default=True)
+    created = models.DateTimeField(editable=False, default=django.utils.timezone.now)
+    modified = models.DateTimeField(default=django.utils.timezone.now)
+
+    def __str__(self):
+        return str(self.hash_key)
+
+    
+class snapshot_instance(models.Model):
+
+    instance_snap_index_obj = models.ForeignKey(Instance_snap_ind, on_delete=models.CASCADE)
+    cloud_provider = models.CharField(max_length=64, unique=False)
+    team = models.CharField(max_length=64, unique=False)
+    instance_name = models.CharField(max_length=64)
+    program = models.CharField(max_length=64, unique=False)
+    contact = models.CharField(max_length=64, unique=False)
+ 
+    Image = models.CharField(max_length=64, unique=False)
+    KeyName =  models.CharField(max_length=64, unique=False)
+
+    flavor = models.ForeignKey(Flavor, on_delete=models.PROTECT, null=True)
+    users = models.CharField(max_length=64, unique=False)
+    CPU = models.DecimalField(max_digits=10, decimal_places=2)
+
+    id_instance =models.CharField(max_length=64, unique=False)
+    launch_time = models.CharField(max_length=64, null=True)
+    id_flavour = models.CharField(max_length=64, null=True)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    daily_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+
 
     def __str__(self):
         return str(self.instance_name)
 
 class Bill(models.Model):
 
-    bill_name =  models.CharField(max_length=64)
+    bill_name =  models.ForeignKey(Instance, on_delete=models.DO_NOTHING, null=True)
     start_date = models.CharField(max_length=64)
     end_date = models.CharField(max_length=64)
-    program =  models.CharField(max_length=64)
-    team =  models.CharField(max_length=64)
+    program =  models.ForeignKey(Program, on_delete=models.PROTECT, null=True)
+    team =  models.ForeignKey(Team, on_delete=models.PROTECT, null=True)
     total_cost = models.CharField(max_length=64)
     Unit =  models.CharField(max_length=64)
  
 def __str__(self):
-        return str(self.start_date)
+        return str(self.bill_name)
+
+class daily_usage(models.Model):
+    created = models.DateTimeField(editable=False, default=django.utils.timezone.now)
+    instance_name = models.CharField(max_length=64)
+    total_cost = models.CharField(max_length=64)
+
+    def __str__(self):
+        return str(self.created)

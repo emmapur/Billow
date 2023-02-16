@@ -2,6 +2,8 @@ from django.urls import path, re_path
 from django.contrib.auth import views as auth_views
 from . import views
 from django.conf.urls import include
+from django.conf import settings
+from django.conf.urls.static import static
 
 app_name = 'accounts'
 
@@ -20,6 +22,8 @@ urlpatterns = [
     re_path(r'^instance_details/$', views.instance_details, name='instance_details'),
     re_path(r'^delete_instance/$', views.delete_instance, name='delete_instance'),
     #url(r'^create_project/$', views.create_project, name='create_project')
+  
+
 
 
 ]

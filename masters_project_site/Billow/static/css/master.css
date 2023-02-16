@@ -24,3 +24,9 @@ body {
   user-select: none;
   font-family: Arial;
 }
+
+caption {
+
+  color: blueviolet;
+
+}
