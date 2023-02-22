@@ -2,6 +2,40 @@
 {% block content %}
         <!-- page content -->
 
+        <script>
+          function change()
+          {
+            var provider = document.getElementById("cloud_prov_name");
+           
+            if(provider.value == "AWS")
+            {
+             
+              document.getElementById("Image_ID").style.display="none";
+            
+          
+            }
+            else
+            {
+             
+              document.getElementById("Image_ID").style.display="block";
+            
+            }
+            if(provider.value == "OpenStack")
+            {
+              document.getElementById("key_name").style.display="none";
+              document.getElementById("Image_name").style.display="none";
+          
+            }
+            else
+            {
+              document.getElementById("key_name").style.display="block";
+              document.getElementById("Image_name").style.display="block";
+              
+            }
+          }
+        </script>
+
+
     	{% if messages %}
     	<ul class="messages">
     	  {% for message in messages %}
@@ -26,14 +60,14 @@
                   <div class="x_content">
                     <br />
 
-                    <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{% url 'accounts:delete_instance' %}" method="get">
+                    <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{% url 'accounts:delete_instance' %}" method="post">
 	                
                       <div class="form-group">
-                      <label class="control-label col-md-3 col-sm-3 col-xs-12">Instance ID<span class="required">*</span></label>
+                 <b> <label class="control-label col-md-3 col-sm-3 col-xs-12">Cloud Provider</label></b>
                       <div class="col-md-4 col-sm-4 col-xs-12">
                         <td class="form-control" name="cloud_prov_name" id ="cloud_prov_name">
                         {% for instance in data %}
-                          <tr>{{ instance.cloud_provider}}</tr>
+                          <tr>{{ instance.cloud_provider__cloud_prov_name}}</tr>
                         {% endfor %}
                         </td>
                      </div>
@@ -57,7 +91,7 @@
                       <div class="col-md-4 col-sm-4 col-xs-12">
                         <td class="form-control" name="instance_name" id ="instance_name">
                          {% for instance in data %}
-                          <tr>{{instance.team}}</tr>
+                          <tr>{{instance.team__team_name}}</tr>
                         {% endfor %}
                       </div>
                      </div>
@@ -78,7 +112,7 @@
                       <div class="col-md-4 col-sm-4 col-xs-12">
                         <td class="form-control" name="instance_name" id ="instance_name">
                          {% for instance in data %}
-                          <tr>{{instance.users}}</tr>
+                          <tr>{{instance.users__user_name}}</tr>
                         {% endfor %}
                      </div>
                    </div>
@@ -100,7 +134,9 @@
                     <div class="col-md-4 col-sm-4 col-xs-12">
                       <td class="form-control" name="instance_name" id ="instance_name">
                         {% for instance in data %}
-                        <tr>{{instance.Image}}</tr>
+                        <tr>{{instance.Image_op__image_name}}</tr>
+                     
+                   
                       {% endfor %}
                    </div>
                  </div>
@@ -125,20 +161,30 @@
                  </div>
                </div>
 
+               <div class="form-group">
+                <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Ram (MB)</label></b>
+                <div class="col-md-4 col-sm-4 col-xs-12">
+                  <td class="form-control" name="ram" id ="ram">
+                    {% for instance in data %}
+                    <tr>{{instance.flavor__Ram_MB}}</tr>
+                  {% endfor %}
+               </div>
+             </div>
 
+
+         
 
                <div class="form-group">
-                 <label class="control-label col-md-3 col-sm-3 col-xs-12">Instance ID<span class="required">*</span></label>
-                 <div class="col-md-4 col-sm-4 col-xs-12">
-                   <td class="form-control" name="id_instance" id ="id_instance">
-                   {% for instance in data %}
-                     <tr>{{ instance.id_instance}}</tr>
-                   {% endfor %}
-                   </td>
+                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="id_instance">Instance ID <span class=></span>
+                </label>
+                <div class="col-md-4 col-sm-4 col-xs-12">
+                  <select class="form-control" name="id_instance" id ="id_instance">
+                    {% for instance in data %}
+                    <option>{{ instance.id_instance}}</option>
+                  {% endfor %}
+                  </select>
                 </div>
-               </div>
-
-               
+              </div>
             
 
 

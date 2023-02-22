@@ -5,7 +5,6 @@ import django
 from django.contrib.auth.models import User
 
 
-
 class Cloud_Provider(models.Model):
 
     cloud_prov_name = models.CharField(max_length=64, unique=True)
@@ -53,8 +52,8 @@ class role(models.Model):
 class Flavor(models.Model):
     flavor_name = models.CharField(max_length=64, blank=False, null=False)
     CPU = models.CharField(max_length=32, blank=True, null=True)
-    Storage = models.CharField(max_length=32, blank=True, null=True)
-    Ram = models.CharField(max_length=32, blank=True, null=True)
+    Storage_GB = models.CharField(max_length=32, blank=True, null=True)
+    Ram_MB = models.CharField(max_length=32, blank=True, null=True)
     id_flavor = models.CharField(max_length=32, blank=True, null=True)
 
     def __str__(self):
@@ -64,12 +63,12 @@ class Flavor(models.Model):
 
 
 
-class Openstack_image(models.Model):
-    Openstack_image_name = models.CharField(max_length=64)
+class Op_image(models.Model):
+    image_name = models.CharField(max_length=64)
     Image_ID = models.CharField(max_length=64)
 
     def __str__(self):
-        return self.Openstack_image_name
+        return self.image_name
         
 class Image(models.Model):
     Image_name = models.CharField(max_length=64)
@@ -97,7 +96,10 @@ class Instance(models.Model):
     program = models.ForeignKey(Program, on_delete=models.PROTECT, null=True)
     contact = models.CharField(max_length=64, unique=False)
  
-    Image = models.CharField(max_length=64)
+    Image_op =  models.ForeignKey(Op_image, on_delete=models.PROTECT, null=True)
+    Image_aws =  models.ForeignKey(Image, on_delete=models.PROTECT, null=True)
+    State = models.CharField(max_length=64, unique=False)
+
     KeyName =  models.ForeignKey(Key, on_delete=models.PROTECT, null=True)
 
     flavor = models.ForeignKey(Flavor, on_delete=models.PROTECT, null=True)
@@ -107,7 +109,7 @@ class Instance(models.Model):
     id_instance = models.CharField(max_length=64, unique=True)
     launch_time = models.CharField(max_length=64, null=True)
     id_flavour = models.CharField(max_length=64, null=True)
-    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     
 
 
@@ -116,14 +118,13 @@ class Instance(models.Model):
     def __str__(self):
         return str(self.instance_name)
 
-
 class Instance_snap_ind(models.Model):
-    timestamp = models.DateTimeField(editable=False)
+    timestamp = models.DateTimeField()
     hash_key = models.CharField(max_length=64, default=None)  # hash of timestamp
   #  active = models.BooleanField(default=True)
     created = models.DateTimeField(editable=False, default=django.utils.timezone.now)
     modified = models.DateTimeField(default=django.utils.timezone.now)
-
+    
     def __str__(self):
         return str(self.hash_key)
 
@@ -143,11 +144,11 @@ class snapshot_instance(models.Model):
     flavor = models.ForeignKey(Flavor, on_delete=models.PROTECT, null=True)
     users = models.CharField(max_length=64, unique=False)
     CPU = models.DecimalField(max_digits=10, decimal_places=2)
-
+    State = models.CharField(max_length=64, unique=False)
     id_instance =models.CharField(max_length=64, unique=False)
     launch_time = models.CharField(max_length=64, null=True)
     id_flavour = models.CharField(max_length=64, null=True)
-    total_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     daily_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 
 
@@ -161,8 +162,8 @@ class Bill(models.Model):
     end_date = models.CharField(max_length=64)
     program =  models.ForeignKey(Program, on_delete=models.PROTECT, null=True)
     team =  models.ForeignKey(Team, on_delete=models.PROTECT, null=True)
-    total_cost = models.CharField(max_length=64)
-    Unit =  models.CharField(max_length=64)
+    total_cost = models.CharField(max_length=64, null=True)
+    Unit =  models.CharField(max_length=70)
  
 def __str__(self):
         return str(self.bill_name)
@@ -174,3 +175,5 @@ class daily_usage(models.Model):
 
     def __str__(self):
         return str(self.created)
+    
+

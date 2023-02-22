@@ -32,15 +32,15 @@
                         <tfoot>
                          
                   
-                  {% for bill in data %}
+                  {% for instance_name, instance_bill_details in data.items %}
 
-                            <td>{{bill.bill_name__instance_name}}</td>
-	                      	<td>{{bill.program__program_name}}</td>
-	                      	<td>{{bill.team__team_name}}</td>
-	                      	<td>{{bill.start_date}}</td>
-                            <td>{{bill.end_date}}</td>
-                            <td>{{bill.total_cost}}</td>
-                            <td>{{bill.Unit}}</td>
+                            <td>{{instance_name}}</td>
+	                      	<td>{{instance_bill_details.program}}</td>
+	                      	<td>{{instance_bill_details.team}}</td>
+	                      	<td>{{instance_bill_details.start_date}}</td>
+                            <td>{{instance_bill_details.end_date}}</td>
+                            <td>{{instance_bill_details.total_cost}}</td>
+                            <td>{{instance_bill_details.Unit}}</td>
                            
 	                      	
                       </tfoot>

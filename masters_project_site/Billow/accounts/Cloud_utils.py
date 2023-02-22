@@ -35,6 +35,19 @@ from datetime import timedelta,date,datetime
 
 
 # creating aws instance
+def get_client_aws():
+
+    client = boto3.client(
+        'ec2',
+        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
+        aws_secret_access_key='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',
+        region_name = 'us-east-1'
+        )
+
+    my_config = Config(
+        region_name = 'us-east-1',)
+    return(client)
+
 def create_aws_instance(params):
 
 
@@ -81,7 +94,8 @@ def create_aws_instance(params):
         users=UserProfile.objects.get(user_name=params['users']),
         contact=params['contact'],
         id_instance=instance_id,
-        launch_time=launch_time
+        launch_time=launch_time,
+        total_cost = 0
     )
 
     #Instance_object.flavor = Flavor.objects.get(flavor_name=params['flavor'])
@@ -180,25 +194,41 @@ def create_openstack_instance(params):
 
     nova.servers.create(name = params['instance_name'], image = params['openstack_image_id'], flavor = params['openstack_flavor_id'],  nics = [{'net-id': '028ec515-365c-418d-b026-66760088fad5'}])
     instance_list = []
+    instance_create = []
+    instance_status = []
     instances = (nova.servers.list())
     for server in instances:
         instances = server.id
+        instance_launch = server.created
+        instance_state = server.status
+
         li = (instances.split(" "))
-    #print(li.append)
-        instance_list.append(li)    
+        li_created = (instance_launch.split(" "))
+        li_state = (instance_state.split(" "))
+
+        instance_create.append(li_created)
+        instance_list.append(li)
+        instance_status.append(li_state)
+
+    launch_time = instance_create[0][0]
     Instance_id = instance_list[0][0]
+    state = instance_status[0][0]
 
     Instance_object = Instance(
     cloud_provider= Cloud_Provider.objects.get(cloud_prov_name = params['cloud_provider']),
     flavor=Flavor.objects.get(flavor_name=params['flavor']),
-    Image=params['openstack_image_id'],
+    Image_op= Op_image.objects.get(image_name = params['Openstack_image_name']),
     KeyName=Key.objects.get(key_name="N/A"),
+    Image_aws=Image.objects.get(Image_name="N/A"),
     instance_name=params['instance_name'],
     team=Team.objects.get(team_name = params['team']),
     program=Program.objects.get(program_name = params['program']),
     users=UserProfile.objects.get(user_name= params['users']),
     contact=params['contact'],
-    id_instance = Instance_id
+    id_instance = Instance_id,
+    launch_time = launch_time,
+    total_cost = 0,
+    State = state
     
     #id_instance=instance_id,
    # launch_time=launch_time
@@ -213,14 +243,14 @@ def create_openstack_instance(params):
 #def delete_openstack_instance(params):
 
 
-def delete_openstack_instance(params):
+def delete_openstack_instance(instance_id):
 
   clients = get_clients('admin')
     
   nova = clients['nova']
-  nova.servers.delete(params['id_instance'])
+  nova.servers.delete(instance_id)
 
-  delete_db_instance_op(params['id_instance'])
+  delete_db_instance_op(instance_id)
 
 def delete_db_instance_op(instance_id):
     print(instance_id)
@@ -233,9 +263,7 @@ def synch_op_cloud():
     #Cloud_Provider=OpenStack
     instance_db = Instance.objects.filter(cloud_provider='OpenStack').values_list('instance_name', flat=True)
 
-    
     clients = get_clients('admin')
-    
     nova = clients['nova']
 
     instance_list = []
@@ -243,9 +271,7 @@ def synch_op_cloud():
     for server in instances:
          instance = server.name
          instance_list.append(instance)
-
    
-
     list_to_add = list(set(instance_list) - set(instance_db))
     instance_name_add = list_to_add[0]
 
@@ -271,7 +297,41 @@ def synch_op_cloud():
     Instance_object.save()
       
 
+## syncing states for aws and openstack clouds 
+def sync_state():
+    clients = get_clients('admin')
+    nova = clients['nova']
+    state = {}
+    instances = (nova.servers.list())
+
+    for server in instances:
+        state[server.name] = server.status
     
+    instances = Instance.objects.filter(cloud_provider__cloud_prov_name='OpenStack')
+
+    for instance in instances:
+        Instance.objects.filter(instance_name = instance.instance_name).update(State=state[instance.instance_name])
+
+def sync_aws_state():
+    client = get_client_aws()
+    Myec2=client.describe_instances()
+    state = {}
+    for data in Myec2['Reservations']:
+     for instance_data in data['Instances']:
+        for instance_name in instance_data['Tags']:
+      
+            state[instance_name['Value']] = instance_data['State']['Name']
+            
+    instances = Instance.objects.filter(cloud_provider__cloud_prov_name='AWS')
+  
+    for instance in instances:
+        Instance.objects.filter(instance_name = instance.instance_name).update(State=state[instance.instance_name])
+
+
+
+
+
+
 
 def create_bill_aws(params):
     client = boto3.client(
@@ -341,7 +401,7 @@ def take_snapshot_instance():
             team = instance.team,
             program = instance.program,
             contact = instance.contact,
-            Image = instance.Image,
+            Image = instance.Image_op,
             KeyName =  instance.KeyName,
             flavor = instance.flavor,
             users = instance.users,
@@ -357,8 +417,10 @@ def take_snapshot_instance():
 
 def get_snapshots():
 
-    end_date = '2023-02-16' ##time now
-    start_date = '2023-02-09' ##time - 24
+    end_date = date.today()
+    start_date = date.today() - timedelta(hours=24)
+    print(end_date)
+    print(start_date)
     snapped_instances_dict = {}
     current_ind = Instance_snap_ind.objects.last()
     print(current_ind)
@@ -367,20 +429,18 @@ def get_snapshots():
     print(snapped_instances)
     snapped_instances_aws = snapshot_instance.objects.filter(instance_snap_index_obj=current_ind, cloud_provider = 'AWS')
 
-
-    for instance_aws in snapped_instances_aws:
-        
-        client = boto3.client(
+    client = boto3.client(
         'ce', 
         aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
         aws_secret_access_key='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',
         region_name = 'us-east-1')
 
-
+    for instance_aws in snapped_instances_aws:
+        
         response = client.get_cost_and_usage(
             TimePeriod={
-                'Start': '2023-02-11',
-                'End': '2023-02-12'
+                'Start': str(start_date),
+                'End': str(end_date)
             },
             Granularity='MONTHLY',
             Filter={
@@ -435,6 +495,122 @@ def get_snapshots():
 
 
     
+
+
+def create_time_bill(params):
+    start_date = params['start_date']
+    end_date = params['end_date']
+    instance_names = params['instances_names']
+    #print(instance_names)
+
+    start_date_obj = date.fromisoformat(start_date)
+    start_date_fix = start_date_obj+timedelta(hours=24)
+    start_date_str = str(start_date_fix)
+
+    end_date_obj = date.fromisoformat(end_date)
+    end_date_fix_need= end_date_obj- timedelta(hours=24)
+    end_date_str_need = str(end_date_fix_need)
+
+    end_date_obj = date.fromisoformat(end_date)
+    end_date_fix= end_date_obj+timedelta(hours=24)
+    end_date_str = str(end_date_fix)
+
+
+  #  snapshot_user_time = Instance_snap_ind.objects.get(timestamp=(start_date, end_date ))
+
+    
+    times = {
+        'snapshot_user_time_start' : Instance_snap_ind.objects.get(timestamp__range=(start_date, start_date_str)),
+         'snapshot_user_time_end' : Instance_snap_ind.objects.get(timestamp__range=(end_date, end_date_str)),
+         'snapshot_user_needed': Instance_snap_ind.objects.get(timestamp__range=(end_date_str_need, end_date))
+    }
+
+    every_time =   Instance_snap_ind.objects.filter(timestamp__range=(start_date, end_date_str))
+    for index in every_time:
+        every_time_inst = snapshot_instance.objects.filter(instance_snap_index_obj= index)
+
+
+
+    total_cost = get_snapshot_obj_bill(times)
+
+  #  snapshot_user_time_end = Instance_snap_ind.objects.get(timestamp__range=(end_date, end_date_str))
+ 
+
+  #  print(snapshot_user_time)
+
+    #### how we get the info per user
+    #  
+    snapped_instances_time = snapshot_instance.objects.filter(instance_snap_index_obj=times['snapshot_user_time_start'], instance_name__in = instance_names)
+    print(snapped_instances_time)
+    bill_details = {}
+    for instance in snapped_instances_time:
+     try:
+        bill_details[instance.instance_name] =  {
+
+            'Instance': instance.instance_name,
+            'program' : Program.objects.get(program_name = instance.program),
+            'team': Team.objects.get(team_name = instance.team),
+            'start_date' : start_date,
+            'end_date' : end_date,
+            'total_cost' : str(total_cost[instance.instance_name]),
+            'Unit' : 'USD'
+
+            } 
+     except:  
+        return bill_details 
+        
+def get_snapshot_obj_bill(times):
+    cost = {}
+    #for snapshot_obj in times.values():
+    #### how we get the info per user 
+   # for index in times['every_time']:
+   #     every_time = snapshot_instance.objects.filter(instance_snap_index_obj= index)
+   # print(every_time)
+
+
+
+
+    snapped_instances_time = snapshot_instance.objects.filter(instance_snap_index_obj= times['snapshot_user_time_start'])
+    snapped_instances_time_end = snapshot_instance.objects.filter(instance_snap_index_obj= times['snapshot_user_time_end'])
+    new_dict = {}
+    for instance_end in snapped_instances_time_end:
+        cost[instance_end.instance_name] = instance_end.total_cost
+      #  print(instance_end.instance_name, instance_end.total_cost)
+    for instance in snapped_instances_time:
+        answer_two=instance.total_cost
+     #   print(type(answer_two))
+     #   print(instance.instance_name, instance.total_cost)
+      #  print(instance.instance_name,  ' cost inital', cost[instance.instance_name])
+       # print(instance.instance_name, ' asnwer_two', answer_two)
+    try:
+        cost[instance.instance_name] = cost[instance.instance_name] - answer_two
+    except: 
+
+
+        snapped_instances_time_new = snapshot_instance.objects.filter(instance_snap_index_obj= times['snapshot_user_needed'])
+
+        for instance_new_end in snapped_instances_time_new:
+           # answer_two=instance.total_cost
+            new_dict[instance.instance_name] = instance_new_end.total_cost
+        for instance in snapped_instances_time:
+            answer_two=instance.total_cost
+            
+            new_dict[instance.instance_name] = new_dict[instance.instance_name] - answer_two
+            print(new_dict)
+      #  print(instance.instance_name, ' cost final', cost[instance.instance_name])
+  #  print(cost)
+    
+        return cost
+            #print(answer_lo)
+            #print(answer)
+           # answer_two = answer - answer_lo
+        #print(yes)
+    
+      #  print(answer)
+       # print(answer_two)
+     #   for instance in snapped_instances_time:
+      #          print(instance_end.total_cost - instance.total_cost)
+
 
 
 
