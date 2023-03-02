@@ -8,6 +8,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import sys
 import keystoneauth1
 import neutron
+    
+import pytz
+
 from decimal import Decimal
 
 import hashlib
@@ -44,9 +47,10 @@ def get_client_aws():
         region_name = 'us-east-1'
         )
 
-    my_config = Config(
-        region_name = 'us-east-1',)
+  
     return(client)
+
+
 
 def create_aws_instance(params):
 
@@ -58,8 +62,6 @@ def create_aws_instance(params):
         region_name = 'us-east-1'
     )
 
-    my_config = Config(
-        region_name = 'us-east-1',)
 
     instances = resource.create_instances(
             ImageId=params['aws_image_id'],
@@ -77,20 +79,31 @@ def create_aws_instance(params):
                 },
             ]
         },
-    ],
-        )
+    ], 
+    BlockDeviceMappings=[
+            {
+                'DeviceName': '/dev/xvda',
+                'Ebs': {
+                    'VolumeSize': int(params['storage']),
+                    'VolumeType': 'standard'
+                }
+            }
+        ]
+    )
 
     instance_id = instances[0].instance_id
     launch_time = instances[0].launch_time
-
+    sync_aws_state()
+    
     Instance_object = Instance(
-        cloud_provider= Cloud_Provider.objects.get(cloud_prov_name=params['cloud_provider']),
+        cloud_provider= Cloud_Provider.objects.get(cloud_prov_name = params['cloud_provider']),
         flavor=Flavor.objects.get(flavor_name=params['flavor']),
-        Image=params['Image'],
+        Image_op= Op_image.objects.get(image_name ="N/A"),
+        Image_aws=aws_image.objects.get(Image_name=params['Image']),
         KeyName=Key.objects.get(key_name=params['aws_key_name']),
         instance_name=params['instance_name'],
-        team=Team.objects.get(team_name=params['team']),
-        program=Program.objects.get(program_name=params['program']),
+        team=Team.objects.get(team_name = params['team']),
+        program=Program.objects.get(program_name = params['program']),
         users=UserProfile.objects.get(user_name=params['users']),
         contact=params['contact'],
         id_instance=instance_id,
@@ -100,6 +113,7 @@ def create_aws_instance(params):
 
     #Instance_object.flavor = Flavor.objects.get(flavor_name=params['flavor'])
     Instance_object.save()
+    sync_aws_state()
 
 
 
@@ -213,13 +227,15 @@ def create_openstack_instance(params):
     launch_time = instance_create[0][0]
     Instance_id = instance_list[0][0]
     state = instance_status[0][0]
+    
+
 
     Instance_object = Instance(
     cloud_provider= Cloud_Provider.objects.get(cloud_prov_name = params['cloud_provider']),
     flavor=Flavor.objects.get(flavor_name=params['flavor']),
     Image_op= Op_image.objects.get(image_name = params['Openstack_image_name']),
     KeyName=Key.objects.get(key_name="N/A"),
-    Image_aws=Image.objects.get(Image_name="N/A"),
+    Image_aws=aws_image.objects.get(Image_name="N/A"),
     instance_name=params['instance_name'],
     team=Team.objects.get(team_name = params['team']),
     program=Program.objects.get(program_name = params['program']),
@@ -401,14 +417,15 @@ def take_snapshot_instance():
             team = instance.team,
             program = instance.program,
             contact = instance.contact,
-            Image = instance.Image_op,
+            Image_op = instance.Image_op,
+            Image_aws = instance.Image_aws,
             KeyName =  instance.KeyName,
             flavor = instance.flavor,
             users = instance.users,
+            State = instance.State,
             id_instance = instance.id_instance,
             launch_time = instance.launch_time,
             CPU = instance.flavor.CPU,
-            id_flavour = instance.id_flavour,
             total_cost = instance.total_cost,
           
             )
@@ -421,7 +438,7 @@ def get_snapshots():
     start_date = date.today() - timedelta(hours=24)
     print(end_date)
     print(start_date)
-    snapped_instances_dict = {}
+    
     current_ind = Instance_snap_ind.objects.last()
     print(current_ind)
     
@@ -494,151 +511,125 @@ def get_snapshots():
             current_instance.save()
 
 
-    
 
 
 def create_time_bill(params):
-    start_date = params['start_date']
-    end_date = params['end_date']
-    instance_names = params['instances_names']
-    #print(instance_names)
+    timezone = pytz.timezone('Europe/Dublin')
 
-    start_date_obj = date.fromisoformat(start_date)
-    start_date_fix = start_date_obj+timedelta(hours=24)
-    start_date_str = str(start_date_fix)
-
-    end_date_obj = date.fromisoformat(end_date)
-    end_date_fix_need= end_date_obj- timedelta(hours=24)
-    end_date_str_need = str(end_date_fix_need)
-
-    end_date_obj = date.fromisoformat(end_date)
-    end_date_fix= end_date_obj+timedelta(hours=24)
-    end_date_str = str(end_date_fix)
+# creating the start time and end time user inputted objects so calculation can be done 
+    start_date_str = params['start_date']
+    end_date_str = params['end_date']
+    date_format = '%Y-%m-%d'
+    start_date = datetime.strptime(start_date_str, date_format)
+    start_date = timezone.localize(start_date)
+    end_date = datetime.strptime(end_date_str, date_format)
+    end_date = timezone.localize(end_date)
+    instance_names = params['instances_names'] ## dictornary so it only get the instances associated with the user
 
 
-  #  snapshot_user_time = Instance_snap_ind.objects.get(timestamp=(start_date, end_date ))
+    snapshot_indices = Instance_snap_ind.objects.filter(timestamp__range=(start_date, end_date))
 
-    
-    times = {
-        'snapshot_user_time_start' : Instance_snap_ind.objects.get(timestamp__range=(start_date, start_date_str)),
-         'snapshot_user_time_end' : Instance_snap_ind.objects.get(timestamp__range=(end_date, end_date_str)),
-         'snapshot_user_needed': Instance_snap_ind.objects.get(timestamp__range=(end_date_str_need, end_date))
-    }
+# Get all snapshots asscoaited with the user inputted time range
+    snapshots = snapshot_instance.objects.filter(instance_snap_index_obj__in=snapshot_indices, instance_name__in=instance_names)
 
-    every_time =   Instance_snap_ind.objects.filter(timestamp__range=(start_date, end_date_str))
-    for index in every_time:
-        every_time_inst = snapshot_instance.objects.filter(instance_snap_index_obj= index)
+    # creating a dictionary that groups all the instances by instance name so they can be called this way (key:instance_name -- value: snapshots asscoaited with the name)
+    snapshots_instance = {}
+    for snapshot in snapshots:
+        if snapshot.instance_name not in snapshots_instance:
+            snapshots_instance[snapshot.instance_name] = []
+        snapshots_instance[snapshot.instance_name].append(snapshot)
+
+    # Get the most recent and earliest snapshots for each instance -- this is so we can then find the cost
+    most_recent_snapshots = {}
+    earliest_snapshots = {}
+    for instance_name, instance_snapshots in snapshots_instance.items():
+        sorted_snapshots = sorted(instance_snapshots, key=lambda s: s.instance_snap_index_obj.timestamp)  ## sorts the list by their timestamps
+        earliest_snapshots[instance_name] = sorted_snapshots[0] ## first entry
+        most_recent_snapshots[instance_name] = sorted_snapshots[-1] ## last entry 
+
+    # to get the total cost within the specified range
+    total_cost_range = {} 
+    for instance_name, instance_snapshots in snapshots_instance.items():
+        daily_cost_in_range = 0
+        for snapshot in instance_snapshots:
+            if snapshot.instance_snap_index_obj.timestamp >= start_date and snapshot.instance_snap_index_obj.timestamp <= end_date:   ## if it falls within this range do the following
+                daily_cost_in_range += snapshot.daily_cost
+        total_cost_range[instance_name] = daily_cost_in_range
+
+    print(total_cost_range)
 
 
-
-    total_cost = get_snapshot_obj_bill(times)
-
-  #  snapshot_user_time_end = Instance_snap_ind.objects.get(timestamp__range=(end_date, end_date_str))
- 
-
-  #  print(snapshot_user_time)
-
-    #### how we get the info per user
-    #  
-    snapped_instances_time = snapshot_instance.objects.filter(instance_snap_index_obj=times['snapshot_user_time_start'], instance_name__in = instance_names)
-    print(snapped_instances_time)
     bill_details = {}
-    for instance in snapped_instances_time:
-     try:
-        bill_details[instance.instance_name] =  {
+    for index in snapshot_indices:
+        every_time_inst = snapshot_instance.objects.filter(instance_snap_index_obj= index, instance_name__in = instance_names)
 
-            'Instance': instance.instance_name,
-            'program' : Program.objects.get(program_name = instance.program),
-            'team': Team.objects.get(team_name = instance.team),
-            'start_date' : start_date,
-            'end_date' : end_date,
-            'total_cost' : str(total_cost[instance.instance_name]),
-            'Unit' : 'USD'
+        for instance in every_time_inst:
+            bill_details[instance.instance_name] =  {
 
-            } 
-     except:  
-        return bill_details 
+                'Instance': instance.instance_name,
+                'program' : Program.objects.get(program_name = instance.program),
+                'team': Team.objects.get(team_name = instance.team),
+                'start_date' : start_date.strftime(date_format),
+                'end_date' : end_date.strftime(date_format),
+                'total_cost' : str(total_cost_range[instance.instance_name]),
+                'Unit' : 'USD'
+
+                } 
+    
+    return bill_details 
         
 def get_snapshot_obj_bill(times):
     cost = {}
-    #for snapshot_obj in times.values():
-    #### how we get the info per user 
-   # for index in times['every_time']:
-   #     every_time = snapshot_instance.objects.filter(instance_snap_index_obj= index)
-   # print(every_time)
-
-
 
 
     snapped_instances_time = snapshot_instance.objects.filter(instance_snap_index_obj= times['snapshot_user_time_start'])
+
     snapped_instances_time_end = snapshot_instance.objects.filter(instance_snap_index_obj= times['snapshot_user_time_end'])
-    new_dict = {}
+    print(snapped_instances_time, ' start')
+    print(snapped_instances_time_end, ' end' )
+
+    #new_dict = {}
+    ## what instaces exit in end that dont exixt in start -- so they exixt now but not previsously
+  #  snapped_instances_time_end_names = [instance.instance_name for instance in snapped_instances_time_end]
+  #  snapped_instances_time_names = [instance.instance_name for instance in snapped_instances_time]
+  #  filter_instance_names = [instance_name for instance_name in snapped_instances_time_end_names if instance_name not in snapped_instances_time_names]
+
+
     for instance_end in snapped_instances_time_end:
         cost[instance_end.instance_name] = instance_end.total_cost
-      #  print(instance_end.instance_name, instance_end.total_cost)
+    print(cost)
+   
     for instance in snapped_instances_time:
-        answer_two=instance.total_cost
-     #   print(type(answer_two))
-     #   print(instance.instance_name, instance.total_cost)
-      #  print(instance.instance_name,  ' cost inital', cost[instance.instance_name])
-       # print(instance.instance_name, ' asnwer_two', answer_two)
-    try:
-        cost[instance.instance_name] = cost[instance.instance_name] - answer_two
-    except: 
-
-
-        snapped_instances_time_new = snapshot_instance.objects.filter(instance_snap_index_obj= times['snapshot_user_needed'])
-
-        for instance_new_end in snapped_instances_time_new:
-           # answer_two=instance.total_cost
-            new_dict[instance.instance_name] = instance_new_end.total_cost
-        for instance in snapped_instances_time:
-            answer_two=instance.total_cost
+        cost_start=instance.total_cost
+    
+        try:
+            cost[instance.instance_name] = cost[instance.instance_name] - cost_start
+        except KeyError:
             
-            new_dict[instance.instance_name] = new_dict[instance.instance_name] - answer_two
-            print(new_dict)
-      #  print(instance.instance_name, ' cost final', cost[instance.instance_name])
+            snapped_instance_mostrecent = snapshot_instance.objects.filter(instance_name = instance.instance_name).last()
+
+            cost[instance.instance_name] = snapped_instance_mostrecent.total_cost - cost_start
+
+ #   for instance_name in filter_instance_names:
+      #  first_instance_snapshot = snapshot_instance.objects.filter(instance_name = instance.instance_name).first()
   #  print(cost)
-    
-        return cost
-            #print(answer_lo)
-            #print(answer)
-           # answer_two = answer - answer_lo
-        #print(yes)
-    
-      #  print(answer)
-       # print(answer_two)
-     #   for instance in snapped_instances_time:
-      #          print(instance_end.total_cost - instance.total_cost)
+        #cost[instance_name]= cost[instance_name] - first_instance_snapshot.total_cost
+ #   print(cost, ' all cost')
+
+
+    every_time =   Instance_snap_ind.objects.filter(timestamp__range=(start_date, end_date_str))
+    total_cost = get_snapshot_obj_bill(times)
+    print(total_cost)
+
+
+    bill_details = {}
+  
+
+
+    return cost
 
 
 
-
-
-
-
-  #  for index in snapped_instances:
-    
-     #   print(index)
-      
-   #     snapped_instances_dict[index.timestamp] = snapped_instances
-      #  print(snapped_instances)
-
-
-
-    #for name in snapped_instances:
-     #   Instances = snapshot_instance.objects.filter(instance_name=name)
-      #  total_cpu = 0 
-     #   instance_name = 0
-      #  print(Instances)
-
-
-        
-       # total_cost = total_cpu*0.69
-      #  print(total_cost)
-       # name_of_instance = instance.CPU
-       # print(name_of_instance)
-       # instances_dict[instance.nam: total_cost]
 
 
 

@@ -6,7 +6,6 @@
         function change()
         {
           var provider = document.getElementById("cloud_prov_name");
-         
           if(provider.value == "AWS")
           {
            
@@ -54,18 +53,18 @@
             <div class="row">
               <div class="col-md-12 col-sm-12 col-xs-12">
                 <div class="x_panel">
-                  <div class="x_title">
-                    <h2>Create a new Instance</h2>
+                  <div class="x_title-form-instance">
+                    <h3>Create a new Instance</h3>
                     <div class="clearfix"></div>
                   </div>
-                  <div class="x_content">
+                  <div class="create_content">
                     <br />
 
                     <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{% url 'accounts:create_new_instance' %}" method="post">
 	                  <div class="form-group">
-	                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Cloud Provider</label>
+	                    <label class="control-label col-md-3 col-sm-3 col-xs-12">Cloud Provider<span class="required">*</span></label>
 	                    <div class="col-md-4 col-sm-4 col-xs-12">
-	                      <select class="form-control" name="cloud_prov_name" id ="cloud_prov_name" onchange="change()">
+	                      <select class="form-control form-control-sm" name="cloud_prov_name" id ="cloud_prov_name" onchange="change()">
 	                      {% for cloud_provider in cloud_providers_list %}
 	                      	<option value={{cloud_provider.cloud_prov_name}}>{{ cloud_provider.cloud_prov_name }}</option>
                         
@@ -77,10 +76,10 @@
 
 
                       <div class="form-group">
-                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="instance_name">Instance Name <span class=></span>
+                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="instance_name">Instance Name <span class="required">*</span>
                       </label>
                       <div class="col-md-4 col-sm-4 col-xs-12">
-                        <input type="text" id="instance_name" name="instance_name" class="form-control col-md-7 col-xs-12">
+                        <input type="text" id="instance_name" name="instance_name" class="form-control form-control-sm">
                       </div>
                     </div>
 
@@ -94,7 +93,7 @@
                     <div class="form-group" name="program_name" id ="program_name">
                       <label class="control-label col-md-3 col-sm-3 col-xs-12">Program <span class="required">*</span></label>
                       <div class="col-md-4 col-sm-4 col-xs-12">
-                        <select class="form-control" name="program_name" id ="program_name">
+                        <select class="form-control form-control-sm" name="program_name" id ="program_name">
                         {% for Program in program_name_list %}
                           <option>{{ Program.program_name}}</option>
                         {% endfor %}
@@ -106,10 +105,10 @@
 
 
                         <div class="form-group">
-                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="Team">Team <span class=></span>
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="Team">Team <span class="required">*</span>
                         </label>
                         <div class="col-md-4 col-sm-4 col-xs-12">
-                          <select class="form-control" name="team_name" id ="team_name">
+                          <select class="form-control form-control-sm" name="team_name" id ="team_name">
                           {% for Team in team_name_list %}
                             <option>{{ Team.team_name}}</option>
                           {% endfor %}
@@ -120,17 +119,17 @@
                     <div class="form-group">
   								<label class="control-label col-md-3 col-sm-3 col-xs-12"
   									for="contact1">Contact<span class="required">*</label>
-  								<div class="col-md-8 col-sm-8 col-xs-12">
-  									<input type="text" class="form-control col-sm-4 col-xs-12" id="contact_name" name="contact_name" placeholder="example@gmail.com" required="required" />
+                    <div class="col-md-4 col-sm-4 col-xs-12">
+  									<input type="text" class="form-control form-control-sm" id="contact_name" name="contact_name" placeholder="example@gmail.com" required="required" />
   								</div>
   							</div>
 
 
                 <div class="form-group">
-                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="User">User <span class=></span>
+                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="User">User <span class="required">*</span>
                 </label>
                 <div class="col-md-4 col-sm-4 col-xs-12">
-                  <select class="form-control" name="username" id ="username">
+                  <select class="form-control form-control-sm" name="username" id ="username">
                   {% for UserProfile in users_list %}
                     <option>{{ UserProfile.user.username}}</option>
                   {% endfor %}
@@ -141,7 +140,7 @@
                       <div class="form-group">
                         <label class="control-label col-md-3 col-sm-3 col-xs-12">Instance Type<span class="required">*</span></label>
                         <div class="col-md-4 col-sm-4 col-xs-12">
-                          <select class="form-control" name="flavor_name" id ="flavor_name">
+                          <select class="form-control form-control-sm" name="flavor_name" id ="flavor_name">
                           {% for Flavor in flavor_list %}
                             <option>{{ Flavor.flavor_name}}</option>
                           {% endfor %}
@@ -149,11 +148,11 @@
                        </div>
                       </div>
                       <div class="form-group" name="Image_name" id ="Image_name">
-                        <label class="control-label col-md-3 col-sm-3 col-xs-12">Image <span class="required">*</span></label>
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12">Image AWS<span class="required">*</span></label>
                         <div class="col-md-4 col-sm-4 col-xs-12">
-                          <select class="form-control" name="Image_name" id ="Image_name">
-                          {% for Image in ImageID_list %}
-                            <option>{{ Image.image_name}}</option>
+                          <select class="form-control form-control-sm" name="Image_name" id ="Image_name">
+                          {% for Image in Image_aws_list %}
+                            <option>{{ Image.Image_name}}</option>
                           {% endfor %}
                           </select>
                        </div>
@@ -162,7 +161,7 @@
                       <div class="form-group"  name="key_name" id ="key_name">
                         <label class="control-label col-md-3 col-sm-3 col-xs-12">Key Name<span class="required">*</span></label>
                         <div class="col-md-4 col-sm-4 col-xs-12">
-                          <select class="form-control" name="key_name" id ="key_name">
+                          <select class="form-control form-control-sm" name="key_name" id ="key_name">
                           {% for Key in KeyName_list %}
                             <option>{{ Key.key_name}}</option>
                           {% endfor %}
@@ -174,8 +173,8 @@
                     <div class="form-group" name="Image_name_op" id ="Image_name_op">
                       <label class="control-label col-md-3 col-sm-3 col-xs-12">Image ID <span class="required">*</span></label>
                       <div class="col-md-4 col-sm-4 col-xs-12">
-                        <select class="form-control" name="Image_name_op" id ="Image_name_op">
-                        {% for Openstack_image in Openstack_image_list %}
+                        <select class="form-control form-control-sm" name="Image_name_op" id ="Image_name_op">
+                        {% for Openstack_image in Image_op_list %}
                           <option>{{ Openstack_image.image_name}}</option>
                         {% endfor %}
                         </select>

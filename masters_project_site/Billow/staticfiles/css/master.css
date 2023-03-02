@@ -1,0 +1,261 @@
+
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background: white;
+  margin: 0;
+  overflow-y: scroll;
+}
+
+
+#note {
+  position: absolute;
+  color: green;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  margin:  auto;
+  text-align: center;
+  user-select: none;
+  font-family: Arial;
+}
+
+.cool-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  font-size: small;
+  white-space: nowrap;
+  float: right;
+  text-overflow: ellipsis;
+  height: 100%;
+  overflow-y: scroll;
+}
+
+.cool-table th,
+.cool-table td {
+  padding: 10px 15px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.cool-table th {
+  font-weight: bold;
+  background-color: #bca3ed;
+  color: #fff;
+  height: 60px;
+
+}
+
+.cool-table td {
+  border-left: 1px solid #d9d9d9;
+  border-right: 1px solid #d9d9d9;
+}
+
+.cool-table tr:last-child td {
+  border-bottom: 1px solid #d9d9d9;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.cool-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.cool-table:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.cool-table tfoot {
+  font-weight: bold;
+
+
+}
+
+
+
+
+
+table.-table tfoot td {
+  font-weight: bold;
+
+  border-top: 1px solid #ccc;
+  padding: 5px;
+}
+
+
+
+
+.list-table-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  font-size: small;
+  height: 100%;
+  white-space: nowrap;
+  word-wrap: break-word;
+
+  float: right;
+}
+
+.list-table th,
+.list-table td {
+  padding: 10px 15px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.list-table th {
+  font-weight: bold;
+  background-color: #bca3ed;
+  color: #fff;
+  height: 70px;
+
+}
+
+.list-table td {
+  border-left: 1px solid #d9d9d9;
+  border-right: 1px solid #d9d9d9;
+}
+
+.list-table tr:last-child td {
+  border-bottom: 1px solid #d9d9d9;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.list-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.list-table:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+
+
+
+.home-billow{
+  font-size: 1.7em;
+  color: #ab87f3;
+  font-weight: bold;
+  
+  
+
+}
+
+.nav-billow{
+  text-align: left;
+}
+
+
+/* Body styling */
+body {
+  background-color: rgb(250, 225, 243);
+  color: black;
+}
+
+/* Navbar styling */
+.nav-cool {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f5e1f3;
+  padding: 10px;
+  font-size: 18px;
+}
+
+.nav-cool a {
+  color: black;
+  text-decoration: none;
+  margin-right: 20px;
+  padding: 5px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.nav-cool a:hover {
+  background-color: #f2f2f2;
+  color: #1e1f20;
+}
+
+.nav-cool .logo {
+  font-weight: bold;
+  font-size: 24px;
+}
+
+/* Content section styling */
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+
+
+
+
+ul.form-control-list {
+  list-style: none !important;
+  margin: 0;
+  padding: 0;
+}
+
+ul.form-control-list li {
+  list-style: none !important;
+}
+
+
+.details_content {
+  font-size: small;
+  
+}
+
+.x_title-details h2{
+  font-size: large;
+  
+
+}
+
+.create_content{
+  font-size: small;
+}
+
+.form-control {
+  border-color: #C8C8C8;
+  width: 300px;
+}
+
+
+.x_title-form-instance h3 {
+  margin-top: 0;
+
+}
+
+.mycontent {
+  margin-top: 20px; /* adjust this value as needed */
+}
+
+
+.form-control-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+  background-color: transparent;
+  border: none;
+  padding: 0px;
+  margin: 0px;
+  font-size: 13px
+}

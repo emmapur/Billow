@@ -30,28 +30,22 @@ def instance_list(request):
     program_name = UserProfile.objects.get(user_name = request.user).program_name
     allowed_roles = ['admin']
     program_roles = ['program_manager']
+    context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
+                               'CPU (Total)', 'RAM (GB)',
+                               'Storage (GB)', 'State', 'Created At', 'Total Cost']}
 
     if request.user.groups.exists():
         group = request.user.groups.all()[0].name
-
     if group in allowed_roles:
-       context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
-                               'CPU (Total)', 'RAM (MB)',
-                               'Storage (GB)', 'State', 'Created At']}
-
-       instance_list = Instance.objects.values('State','cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram_MB', 'flavor__Storage_GB', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
+       instance_list = Instance.objects.values('State','cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram_GB', 'flavor__Storage_GB', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time', 'total_cost')
        context['data'] = instance_list
     elif group in program_roles:
-        context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
-                               'CPU (Total)', 'RAM (GiB)',
-                               'Storage (GiB)', 'State', 'Created At']}
-        instance_list = Instance.objects.filter(program__program_name = program_name).values('State','cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram_MB', 'flavor__Storage_GB', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
+
+        instance_list = Instance.objects.filter(program__program_name = program_name).values('State','cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram_GB', 'flavor__Storage_GB', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time', 'total_cost')
         context['data'] = instance_list
     else:
-        context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
-                               'CPU (Total)', 'RAM (GiB)',
-                               'Storage (GiB)', 'State', 'Created At']}
-        instance_list = Instance.objects.filter(team__team_name = team_name).values('State', 'cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram_MB', 'flavor__Storage_GB', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time')
+
+        instance_list = Instance.objects.filter(team__team_name = team_name).values('State', 'cloud_provider__cloud_prov_name', 'flavor__CPU', 'flavor__Ram_GB', 'flavor__Storage_GB', 'team__team_name', 'program__program_name', 'instance_name','flavor__flavor_name', 'launch_time', 'total_cost')
         context['data'] = instance_list
 
     return render(request, 'instance_list.html', context)
@@ -66,7 +60,7 @@ def instance_details(request):
                                'CPU (Total)', 'RAM (GiB)',
                                'Storage (GiB)', 'State', 'Created At']}
 
-    instance_list = Instance.objects.filter(instance_name=instance_name).values('id_instance', 'Image_op__image_name', 'flavor__Ram_MB', 'flavor__flavor_name', 'flavor__CPU', 'instance_name', 'users__user_name', 'contact', 'cloud_provider__cloud_prov_name','team__team_name', 'program__program_name', 'instance_name','KeyName')
+    instance_list = Instance.objects.filter(instance_name=instance_name).values('id_instance', 'Image_op__image_name', 'flavor__Ram_GB', 'flavor__flavor_name', 'flavor__CPU', 'instance_name', 'users__user_name', 'contact', 'cloud_provider__cloud_prov_name','team__team_name', 'program__program_name', 'instance_name','KeyName__key_name', 'Image_aws__Image_name', 'State', 'flavor__Storage_GB')
 
 
     context={
@@ -81,29 +75,36 @@ def instance_details(request):
 @csrf_exempt
 def delete_instance(request):
   
-    #cloud_provider = request.GET.get('cloud_prov_name')
-    #instance_id = request.POST.get('id_instance')
-    sync_aws_state()
-  #  
-   # print(cloud_provider)
+    cloud_provider = request.POST.get('cloud_prov_name')
+    instance_id = request.POST.get('id_instance')
 
-    #params = {
-       # 'aws_instance_id':instance_id,
-       # 'id_instance':instance_id
-   # }
+    print(f"cloud_provider: {cloud_provider}")
+    print(f"instance_id: {instance_id}")
 
-  #  take_snapshot_instance()
-  #  get_snapshots()
+    print(cloud_provider)
+
+    params = {
+        'aws_instance_id':instance_id,
+        'id_instance':instance_id
+     }
+    
+    try:
+        
+        if (cloud_provider == 'OpenStack'):
+            delete_openstack_instance(instance_id)
+        else:
+            delete_an_instance(params)
 
 
-  #  if (cloud_provider == 'OpenStack'):
-   # delete_openstack_instance(instance_id)
-   # else:
-      #  delete_an_instance(params)
-
-  #  delete_an_instance(params)
-
+    except Exception as e:
+     print ("||view||delete_instance error:" + str(e))
+     messages.error(request, "Instance request failed to delete. Error: " + str(e))
+     return HttpResponseRedirect(reverse('accounts:instance_list'))
+    
+    messages.success(request, "Instance deleted successfully!")
     return HttpResponseRedirect(reverse('accounts:instance_list'))
+
+
 
 
 
@@ -113,7 +114,8 @@ def delete_instance(request):
 def create_new_instance_form(request):
     cloud_providers_list = Cloud_Provider.objects.all()
     flavor_list = Flavor.objects.all()
-    ImageID_list = Image.objects.all()
+    Image_aws_list = aws_image.objects.all()
+    Image_op_list = Op_image.objects.all()
     KeyName_list = Key.objects.all()
     instance_name_list = Instance.objects.all()
     team_name_list = Team.objects.all()
@@ -125,7 +127,8 @@ def create_new_instance_form(request):
     context = {
         'cloud_providers_list' : cloud_providers_list,
         'flavor_list': flavor_list,
-        'ImageID_list': ImageID_list,
+        'Image_aws_list': Image_aws_list,
+        'Image_op_list': Image_op_list,
         'KeyName_list': KeyName_list,
         'instance_name': instance_name_list,
         'team_name_list' : team_name_list,
@@ -163,6 +166,7 @@ def create_new_instance(request):
 
     flavor_name = request.POST.get('flavor_name') 
     flavor_id = Flavor.objects.values_list('id_flavor', flat=True).get(flavor_name=flavor_name)
+    storage = Flavor.objects.values_list('Storage_GB', flat=True).get(flavor_name=flavor_name)
 
  #   instance_list = Instance.objects.filter(instance_name=instance_name).values('id_instance', '
     
@@ -182,23 +186,23 @@ def create_new_instance(request):
         'Image': Image,
         'openstack_flavor_id' : flavor_id,
         'Openstack_image_name':  Openstack_image_name,
-    
+        'storage': storage,
         'openstack_image_id' : Openstack_image_id
     }
 
-  #  try:
-    if (cloud_provider == 'OpenStack'):
-             create_openstack_instance(params)
-    else:
-            create_aws_instance(params)
+    try:
+        if (cloud_provider == 'OpenStack'):
+                create_openstack_instance(params)
+        else:
+                create_aws_instance(params)
 
 
-   # except Exception as e:
-     #   print ("||view||create_new_instance error:" + str(e))
-     #   messages.error(request, "Instance request failed to submit. Error: " + str(e))
-     #   return HttpResponseRedirect(reverse('accounts:create_instance_form'))
-
-   # messages.success(request, "Instance created successfully!")
+    except Exception as e:
+     print ("||view||create_new_instance error:" + str(e))
+     messages.error(request, "Instance request failed to submit. Error: " + str(e))
+     return HttpResponseRedirect(reverse('accounts:create_instance_form'))
+    
+    messages.success(request, "Instance created successfully!")
     return HttpResponseRedirect(reverse('accounts:instance_list'))
 
 
@@ -222,23 +226,15 @@ def user_instances(request):
          
 
          instances_name = snapshot_instance.objects.values('instance_name').distinct()
-         print(instances_name)
-         
-         #for instance in instances_name:
-         #   if instance not in instance_list:
-         #       instance_list.append(instance)
-
-       #  instances_name_list = instance_list 
-
-       #  print(instances_name)
-
+      
     elif group in program_roles:
         
-        instances_name = Instance.objects.filter(program__program_name =program_name ).values('instance_name')
+        instances_name = snapshot_instance.objects.filter(program =program_name ).values('instance_name').distinct()
      
      
     else:
-        instances_name = Instance.objects.filter(team__team_name =team_name ).values('instance_name')
+        instances_name = snapshot_instance.objects.filter(team =team_name ).values('instance_name').distinct()
+        print(instances_name)
 
     return instances_name
 
@@ -270,7 +266,7 @@ def create_bill(request):
     bill_details = create_time_bill(params)
 
     bill = {}
-    total = 0 
+    total = 0
     created_bill = bill_details
     print(created_bill)
     bill['data'] = created_bill
@@ -279,7 +275,7 @@ def create_bill(request):
         instance_total_cost = bill_details[instance_name]['total_cost']
 
         total += float(instance_total_cost)
-    new_total = total
+    new_total = round(total, 2)
 
     context={
             'total_cost': new_total,

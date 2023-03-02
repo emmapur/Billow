@@ -3,15 +3,6 @@
 {% block content %}
 
 
-<script src="{% static "js/project_list.js" %}"></script>
-
-
-
-<script>
-  var project_list = {{project_list | safe}}
-
-</script>
-
 
 <div class="right_col" role="main">
 <ul class="messages">
@@ -24,11 +15,10 @@
   </div>
 {% endif %}
 
-<div class="x_content" >
-                  <p class="text-muted font-13 m-b-30">
-                  </p>
+<div class="y_content" >
+                
 
-                  <table id="datatable-instance-list" style="width: 100% !important" class="table table-striped table-bordered display compact">
+                  <table id="datatable-instance-list" class="list-table">
                     <thead>
                       <tr>
                           <th> Instances List </th>
@@ -40,7 +30,7 @@
 
                     <tbody>
                       <tr>
-                        <tfoot>
+                      
                   {% for instance in data %}
 
 
@@ -51,15 +41,16 @@
 	                      	<td>{{instance.team__team_name}}</td>
                           <td>{{instance.flavor__flavor_name}}</td>
                           <td>{{instance.flavor__CPU}}</td>
-                          <td>{{instance.flavor__Ram_MB}}</td>
+                          <td>{{instance.flavor__Ram_GB}}</td>
 	                      	<td>{{instance.flavor__Storage_GB}}</td>
 	                      	<td>{{instance.State}}</td>
                           <td>{{instance.launch_time}}</td>
+                          <td>{{instance.total_cost}}</td>
 	                      	
-                      </tfoot>
+                     
                             </tr>
 {% endfor %}
-
+ </table>
 
 
   	                      		 <!-- Example split danger button -->

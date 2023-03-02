@@ -6,7 +6,8 @@
     <title>Billow</title>
 
 
-    <link href="{% static "billow/css/master.css" %}"  rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/master.css' %}">
+
     
     
     <!-- Latest compiled and minified CSS -->
@@ -14,45 +15,31 @@
     integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 
     <!-- Optional theme -->
-    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous"> -->
+   
 
     <!-- Alternative to Bootstrap 3 Glyphicons -->
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
 
-
-
-
   </head>
   <body>
-
-
-    <nav class="navbar navbar-expand-lg bg-light mynav" role="navigation" id="navbar">
-      <div class="container">
-        <div class="navbar-nav align-items-center">
-          <a class="navbar-brand mynav" href="{% url 'home' %}">Billow</a>
-        </div>
-        <div class="main_menu_side hidden-print main_menu">
-          {% if user.is_authenticated %}
-          <a class="nav-item nav-link" href="{% url 'accounts:create_instance_form' %}">Create Instance<a/>
-          <a class="nav-item nav-link" href="{% url 'accounts:instance_list' %}" >Instances<a/>
-          <a class="nav-item nav-link" href="{% url 'accounts:billing' %}" >Billing<a/>
-      
-            
-          <a class="nav-item nav-link" href="{% url 'accounts:logout' %}">Log Out<a/>
-          {% else %}
-          <a class="nav-item nav-link" href="{% url 'accounts:login' %}">Log in</a>
-          {% endif %}
-        </div>
+    <nav class="nav-cool" role="navigation" id="navbar">
+      <a class="logo" href="{% url 'home' %}">Billow</a>
+      <div class="main_menu_side">
+        {% if user.is_authenticated %}
+          <a href="{% url 'accounts:create_instance_form' %}">Create Instance<a/>
+          <a href="{% url 'accounts:instance_list' %}" >Instances<a/>
+          <a href="{% url 'accounts:billing' %}" >Billing<a/>
+          <a href="{% url 'accounts:logout' %}">Log Out<a/>
+        {% else %}
+          <a href="{% url 'accounts:login' %}">Log in</a>
+        {% endif %}
       </div>
     </nav>
-    <div class="container mycontent">
+    <div class="container mycontent"> 
       {% block content %}
-
-
       {% endblock %}
     </div>
-
   </body>
 </html>

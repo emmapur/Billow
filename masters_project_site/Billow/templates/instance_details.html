@@ -1,82 +1,71 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
         <!-- page content -->
-
-        <script>
-          function change()
-          {
-            var provider = document.getElementById("cloud_prov_name");
-           
-            if(provider.value == "AWS")
-            {
-             
-              document.getElementById("Image_ID").style.display="none";
-            
-          
-            }
-            else
-            {
-             
-              document.getElementById("Image_ID").style.display="block";
-            
-            }
-            if(provider.value == "OpenStack")
-            {
-              document.getElementById("key_name").style.display="none";
-              document.getElementById("Image_name").style.display="none";
-          
-            }
-            else
-            {
-              document.getElementById("key_name").style.display="block";
-              document.getElementById("Image_name").style.display="block";
-              
-            }
-          }
-        </script>
+       
 
 
-    	{% if messages %}
-    	<ul class="messages">
-    	  {% for message in messages %}
+        {% if messages %}
+        <ul class="messages">
+          {% for message in messages %}
+        
+          <div class="alert alert-primary">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times</a>
+            {{ message }}
+          </div>
+        
+          {% endfor %}
+        </ul>
+        {% endif %}
+        
+        <body onload="change()">
+          <div class="clearfix"></div>
+          <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+              <div class="x_panel">
+                <div class="x_title-details">
+                  <h2>Instance Details</h2>
+                  <div class="clearfix"></div>
+                </div>
+                
+              </div>
+              <div class="details_content">
+                <br />
 
-    	  <div class="alert alert-primary">
-    	    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times</a>
-    	     	{{ message }}
-    	  </div>
+                <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{% url 'accounts:delete_instance' %}" method="post">
+                <div class="form-group" >
+                <b> <label class="control-label col-md-3 col-sm-3 col-xs-12">Cloud Provider:</label></b> 
+                  <div class="col-md-4 col-sm-4 col-xs-12">
+                    <select class="form-control-select" name="cloud_prov_name" id ="cloud_prov_name" >
+                    {% for instance in data %}
+                      <option value="{{instance.cloud_provider__cloud_prov_name}}">{{instance.cloud_provider__cloud_prov_name}}</option>
+                  
+                    {% endfor %}
+                    </select>
+                 </div>
+                </div>
 
-    	  {% endfor %}
-    	</ul>
-    	{% endif %}
+                  
 
-            <div class="clearfix"></div>
-            <div class="row">
-              <div class="col-md-12 col-sm-12 col-xs-12">
-                <div class="x_panel">
-                  <div class="x_title">
-                    <h2>Instance Details</h2>
-                    <div class="clearfix"></div>
-                  </div>
-                  <div class="x_content">
-                    <br />
 
-                    <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{% url 'accounts:delete_instance' %}" method="post">
-	                
-                      <div class="form-group">
-                 <b> <label class="control-label col-md-3 col-sm-3 col-xs-12">Cloud Provider</label></b>
-                      <div class="col-md-4 col-sm-4 col-xs-12">
-                        <td class="form-control" name="cloud_prov_name" id ="cloud_prov_name">
+
+                  <div class="form-group" name="op_image" id ="op_image" >
+                    <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Image:</label></b>
+                    <div class="col-md-4 col-sm-4 col-xs-12">
+                      <td class="form-control" name="op_image" id ="op_image" >
                         {% for instance in data %}
-                          <tr>{{ instance.cloud_provider__cloud_prov_name}}</tr>
+                        <tr>{{instance.Image_op__image_name}}</tr>
                         {% endfor %}
-                        </td>
-                     </div>
+                      </td>
                     </div>
-      
-
+                  </div>
+        
+                  
+            
+              
 
                     <div class="form-group">
-                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Instance Name</label></b>
+                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Instance Name:</label></b>
                       <div class="col-md-4 col-sm-4 col-xs-12">
                         <td class="form-control" name="instance_name" id ="instance_name">
                          {% for instance in data %}
@@ -87,9 +76,9 @@
                     </div>
 
                     <div class="form-group">
-                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Team</label></b>
+                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Team:</label></b>
                       <div class="col-md-4 col-sm-4 col-xs-12">
-                        <td class="form-control" name="instance_name" id ="instance_name">
+                        <td class="form-control" name="team" id ="team">
                          {% for instance in data %}
                           <tr>{{instance.team__team_name}}</tr>
                         {% endfor %}
@@ -97,9 +86,9 @@
                      </div>
 
                      <div class="form-group">
-                       <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Conatct</label></b>
+                       <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Contact:</label></b>
                        <div class="col-md-4 col-sm-4 col-xs-12">
-                         <td class="form-control" name="instance_name" id ="instance_name">
+                         <td class="form-control" name="contact" id ="contact">
                           {% for instance in data %}
                            <tr>{{instance.contact}}</tr>
                          {% endfor %}
@@ -108,9 +97,9 @@
 
 
                     <div class="form-group">
-                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">User</label></b>
+                      <b><label class="control-label col-md-3 col-sm-3 col-xs-12">User:</label></b>
                       <div class="col-md-4 col-sm-4 col-xs-12">
-                        <td class="form-control" name="instance_name" id ="instance_name">
+                        <td class="form-control" name="user_name" id ="user_name">
                          {% for instance in data %}
                           <tr>{{instance.users__user_name}}</tr>
                         {% endfor %}
@@ -119,7 +108,7 @@
 
 
                    <div class="form-group">
-                     <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Instance Type</label></b>
+                     <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Instance Type:</label></b>
                      <div class="col-md-4 col-sm-4 col-xs-12">
                        <td class="form-control" >
                         {% for instance in data %}
@@ -129,66 +118,78 @@
                   </div>
 
 
-                  <div class="form-group">
-                    <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Image</label></b>
-                    <div class="col-md-4 col-sm-4 col-xs-12">
-                      <td class="form-control" name="instance_name" id ="instance_name">
-                        {% for instance in data %}
-                        <tr>{{instance.Image_op__image_name}}</tr>
-                     
-                   
-                      {% endfor %}
-                   </div>
-                 </div>
+               
 
-                 <div class="form-group">
-                   <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Key Name</label></b>
-                   <div class="col-md-4 col-sm-4 col-xs-12">
-                     <td class="form-control" name="instance_name" id ="instance_name">
-                       {% for instance in data %}
-                       <tr>{{instance.KeyName}}</tr>
-                     {% endfor %}
-                  </div>
-                </div>
+                 <div class="form-group" name="aws_imgage" id ="aws_image">
+                  <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Image:</label></b>
+                  <div class="col-md-4 col-sm-4 col-xs-12">
+                    <td class="form-control" name="aws_imgage" id ="aws_image">
+                      {% for instance in data %}
+                      <tr>{{instance.Image_aws__Image_name}}</tr>
+                    {% endfor %}
+                    </td>
+                 </div>
+               </div>
+
+
+          
 
                 <div class="form-group">
-                  <b><label class="control-label col-md-3 col-sm-3 col-xs-12">CPU</label></b>
+                  <b><label class="control-label col-md-3 col-sm-3 col-xs-12">CPU:</label></b>
                   <div class="col-md-4 col-sm-4 col-xs-12">
-                    <td class="form-control" name="instance_name" id ="instance_name">
+                    <td class="form-control" name="CPU" id ="CPU">
                       {% for instance in data %}
                       <tr>{{instance.flavor__CPU}}</tr>
                     {% endfor %}
                  </div>
                </div>
+               <div class="form-group">
+                <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Storage (GB):</label></b>
+                <div class="col-md-4 col-sm-4 col-xs-12">
+                  <td class="form-control" name="Storeage" id ="Storeage">
+                    {% for instance in data %}
+                    <tr>{{instance.flavor__Storage_GB}}</tr>
+                  {% endfor %}
+               </div>
+             </div>
 
                <div class="form-group">
-                <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Ram (MB)</label></b>
+                <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Ram (MB):</label></b>
                 <div class="col-md-4 col-sm-4 col-xs-12">
                   <td class="form-control" name="ram" id ="ram">
                     {% for instance in data %}
-                    <tr>{{instance.flavor__Ram_MB}}</tr>
+                    <tr>{{instance.flavor__Ram_GB}}</tr>
                   {% endfor %}
                </div>
              </div>
 
 
-         
+             
+             <div class="form-group" name="key_name" id ="key_name" >
+              <b><label class="control-label col-md-3 col-sm-3 col-xs-12">Key:</label></b>
+              <div class="col-md-4 col-sm-4 col-xs-12">
+                <td class="form-control" name="key_name" id ="key_name" >
+                  {% for instance in data %}
+                 <tr>{{instance.KeyName__key_name}}</tr> 
+                  {% endfor %}
+                </td>
+              </div>
+            </div>
 
-               <div class="form-group">
-                <label class="control-label col-md-3 col-sm-3 col-xs-12" for="id_instance">Instance ID <span class=></span>
-                </label>
+
+               <div class="form-group" name="id_instance" id ="id_instance">
+              <b> <label class="control-label col-md-3 col-sm-3 col-xs-12" for="id_instance">Instance ID:
+              </label></b>
                 <div class="col-md-4 col-sm-4 col-xs-12">
-                  <select class="form-control" name="id_instance" id ="id_instance">
+                  <select class="form-control-select" name="id_instance" id ="id_instance">
                     {% for instance in data %}
                     <option>{{ instance.id_instance}}</option>
                   {% endfor %}
                   </select>
                 </div>
               </div>
-            
-
-
-
+              
+             
                         <div class="ln_solid"></div>
                         <div class="form-group">
                           <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
@@ -197,12 +198,38 @@
                 <button class="btn btn-warning" type="submit">Stop</button>
                           </div>
                         </div>
-                      </form>
+                  
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          {% endblock %}
+        </body>
+      </form>
+          <script>
+            function change() {
+              var provider = document.getElementById("cloud_prov_name");
+            
+            
+              if (provider.value == "AWS") {
+         
+                document.getElementById("op_image").style.display = "none";
+        
+
+              } else {
+
+
+                document.getElementById("op_image").style.display = "block";
+                document.getElementById("aws_image").style.display = "none";
+                document.getElementById("key_name").style.display = "none";
+
+                window.alert( point);
+              }
+            }
+            </script>
+     
+  
           <!-- /page content -->
+
+{% endblock %}

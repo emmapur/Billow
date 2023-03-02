@@ -1,39 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-        <!-- page content -->
-
-      <script>
-        function change()
-        {
-          var provider = document.getElementById("cloud_prov_name");
-         
-          if(provider.value == "Amazon")
-          {
-           
-            document.getElementById("Image_ID").style.display="none";
-            document.getElementById("Openstack_Network_id").style.display="none";
-        
-          }
-          else
-          {
-           
-            document.getElementById("Image_ID").style.display="block";
-            document.getElementById("Openstack_Network_id").style.display="block";
-          }
-          if(provider.value == "OpenStack")
-          {
-            document.getElementById("key_name").style.display="none";
-            document.getElementById("Image_name").style.display="none";
-        
-          }
-          else
-          {
-            document.getElementById("key_name").style.display="block";
-            document.getElementById("Image_name").style.display="block";
-            
-          }
-        }
-      </script>
 
     	{% if messages %}
     	<ul class="messages">
@@ -48,8 +14,6 @@
     	</ul>
     	{% endif %}
 <body >
-  
-
             <div class="clearfix"></div>
             <div class="row">
               <div class="col-md-12 col-sm-12 col-xs-12">
@@ -71,8 +35,7 @@
                             </div>
                           </div>
       
-	                   </div>
-	                  </div>
+	                
 
                       <label class="control-label col-md-3 col-sm-3 col-xs-12" for="instance_name">End Date <span class=></span>
                       </label>
@@ -81,14 +44,13 @@
                       </div>
                     </div>
 
-                 </div>
-                </div>
+               
 
 
                         <div class="ln_solid"></div>
                         <div class="form-group">
                           <div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
-  						  <button class="btn btn-primary" type="reset">Reset</button>
+  						              <button class="btn btn-primary" type="reset" >Reset</button>
                             <button type="submit" class="btn btn-success">Submit</button>
                           </div>
                         </div>
