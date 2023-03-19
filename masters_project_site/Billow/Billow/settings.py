@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'bootstrap3',
     'accounts',
     'django_cron',
+    'chartjs',
 ]
 
 MIDDLEWARE = [
@@ -72,6 +73,44 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Billow.wsgi.application'
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'D:\log\debug_billow.log',
+        },
+        'console': { 
+            'class': 'logging.StreamHandler', 
+            'formatter': 'billow_log_format',
+    },
+
+},
+    'formatters': {
+       'billow_log_format': {
+        'format': '%(asctime)s [%(name)s:%(lineno)s] [%(levelname)s] : %(message)s',
+        'datefmt' : "%Y-%m-%d %H:%M:%S"
+        }, 
+        	
+    },
+
+
+    'loggers': {
+        
+        'accounts': {
+            'handlers': ['file'],
+            'level':  'DEBUG',
+            'propgate': True,
+        },
+      
+    }
+
+}
 
 
 # Database

@@ -47,7 +47,6 @@ def get_client_aws():
         region_name = 'us-east-1'
         )
 
-  
     return(client)
 
 
@@ -141,7 +140,6 @@ def delete_db_instance(instance_id):
 
 
 
-
 def stop_an_instance(params):
 
     client = boto3.client(
@@ -228,8 +226,6 @@ def create_openstack_instance(params):
     Instance_id = instance_list[0][0]
     state = instance_status[0][0]
     
-
-
     Instance_object = Instance(
     cloud_provider= Cloud_Provider.objects.get(cloud_prov_name = params['cloud_provider']),
     flavor=Flavor.objects.get(flavor_name=params['flavor']),
@@ -246,13 +242,8 @@ def create_openstack_instance(params):
     total_cost = 0,
     State = state
     
-    #id_instance=instance_id,
-   # launch_time=launch_time
 )
 
-
-
-#Instance_object.flavor = Flavor.objects.get(flavor_name=params['flavor'])
     Instance_object.save()
 
 
@@ -275,43 +266,148 @@ def delete_db_instance_op(instance_id):
 
 
 
+def stop_openstack_instance(instance_id):
+
+  clients = get_clients('admin')
+    
+  nova = clients['nova']
+  nova.servers.stop(instance_id)
+
+
+def start_openstack_instance(instance_id):
+
+  clients = get_clients('admin')
+    
+  nova = clients['nova']
+  nova.servers.start(instance_id)
+
+
+
+
 def synch_op_cloud():
     #Cloud_Provider=OpenStack
-    instance_db = Instance.objects.filter(cloud_provider='OpenStack').values_list('instance_name', flat=True)
+    instance_db = Instance.objects.filter(cloud_provider__cloud_prov_name ='OpenStack').values_list('instance_name', flat=True)
 
     clients = get_clients('admin')
     nova = clients['nova']
 
-    instance_list = []
-    instances = (nova.servers.list())
-    for server in instances:
-         instance = server.name
-         instance_list.append(instance)
-   
-    list_to_add = list(set(instance_list) - set(instance_db))
-    instance_name_add = list_to_add[0]
+    instances = nova.servers.list()
+    
 
-    instance_list = []
-    instances = (nova.servers.list(instance_name_add))
-    for server in instances:
-        instance = server.name
-        instance_flavor = server.flavor['id']
-        instance_image = server.image['id']
+    # Add new instances to the local database
+    instances_to_add = [server for server in instances if server.name not in instance_db]
+
+    for server in instances_to_add:
+        instance_name_add = server.name
+        flavor_id = server.flavor['id']
+        flavor_name = Flavor.objects.filter(id_flavor=flavor_id).values_list('flavor_name', flat=True).first()
+     
+        launch = server.created
+        state = server.status
+        image = server.image
+        for id in image:
+            image_id = image['id']
+
+
+        print(image_id, launch, flavor_id)
+
         instance_id = server.id
 
-    
-    flavor_name = Flavor.objects.filter(id_flavor = instance_flavor).values_list('flavor_name', flat=True)
-    print(flavor_name)
-    Instance_object = Instance(
-        cloud_provider= 'Openstack',
-        flavor=flavor_name,
-        Image= instance_image,
-        instance_name= instance_name_add,
-        id_instance=instance_id
-    )
-    
-    Instance_object.save()
+        Instance_object = Instance(
+            cloud_provider=Cloud_Provider.objects.get(cloud_prov_name ='OpenStack'),
+            flavor=Flavor.objects.get(flavor_name =flavor_name),
+            Image_op=Op_image.objects.get(Image_ID=image_id),
+            instance_name=instance_name_add,
+            id_instance=instance_id,
+            launch_time = launch,
+            State = state,
+       
+        )
+
+        Instance_object.save()
+
+    # Delete instances from the local database that are not found in OpenStack
+    instances_to_delete = set(instance_db) - set(server.name for server in instances)
+    for instance_name in instances_to_delete:
+        Instance.objects.filter(instance_name=instance_name).delete()
       
+
+def sync_aws_cloud():
+
+        instance_db = Instance.objects.filter(cloud_provider__cloud_prov_name='AWS').values_list('instance_name', flat=True)
+
+
+
+        resource = boto3.resource(
+        'ec2',
+        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
+        aws_secret_access_key='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',
+        region_name = 'us-east-1'
+        )
+
+        instances = resource.instances.all()
+
+        # Add new instances to the local database
+        instances_to_add = []
+    
+
+        for instance in instances:
+            if instance.tags is not None:
+                for tag in instance.tags:
+                    if tag['Key'] == 'Name' and tag['Value'] not in instance_db:
+                        instances_to_add.append(instance)
+                        break
+
+        for instance in instances_to_add:
+            instance_name_add = [tag['Value'] for tag in instance.tags if tag['Key'] == 'Name'][0]
+            flavor_name = instance.instance_type
+            image_id = instance.image_id
+            instance_id = instance.id
+            launch_time = instance.launch_time
+            State = instance.state
+            Key_name = instance.key_name
+
+            Instance_object = Instance(
+                cloud_provider=Cloud_Provider.objects.get(cloud_prov_name ='AWS'),
+                flavor=Flavor.objects.get(flavor_name =flavor_name),
+                Image_aws=aws_image.objects.get(Image_name =image_id),
+                instance_name=instance_name_add,
+                id_instance=instance_id,
+                State = State,
+                launch_time = launch_time,
+                KeyName = Key.objects.get(key_name = Key_name)
+            )
+
+            Instance_object.save()
+
+        # Delete instances from the local database that are not found in AWS
+        instance_names = {tag['Value'] for instance in instances for tag in instance.tags if tag['Key'] == 'Name'}
+        instances_to_delete = set(instance_db) - instance_names
+        for instance_name in instances_to_delete:
+            Instance.objects.filter(instance_name=instance_name).delete()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## syncing states for aws and openstack clouds 
 def sync_state():
@@ -345,53 +441,6 @@ def sync_aws_state():
 
 
 
-
-
-
-
-def create_bill_aws(params):
-    client = boto3.client(
-    'ce', 
-    aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-    aws_secret_access_key='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',
-    #aws_session_token=SESSION_TOKEN
-    region_name = 'us-east-1')
-
-
-    response = client.get_cost_and_usage(
-        TimePeriod={
-            'Start': params['start_date'],
-            'End': params['end_date'],
-        },
-        Granularity='MONTHLY',
-
-        Metrics=[
-            'NetAmortizedCost',
-        ]
-)
-
-    print(response['ResultsByTime'])
-
-    for cost in response['ResultsByTime']:
-    #print(cost)
-        Total = (cost['Total'])
-        all_cost  = Total['NetAmortizedCost']
-        total_cost = all_cost['Amount']
-        Unit = all_cost['Unit']
-
-
-    bill_object = Bill(
-    program = params['program'],
-    team= params['team'],
-    start_date=params['start_date'],
-    end_date=params['end_date'],
-    total_cost = total_cost,
-    Unit = Unit
-    )
-  
-    bill_object.save()
-    
-
 def take_snapshot_instance():
 
     timestamp = django.utils.timezone.now()
@@ -407,7 +456,6 @@ def take_snapshot_instance():
     new_instance_snap_index.save()
 
     instances = Instance.objects.filter()
-    #for flavor in flavors:
     for instance in instances:
             new_instance_snap = snapshot_instance(
             
@@ -436,23 +484,21 @@ def get_snapshots():
 
     end_date = date.today()
     start_date = date.today() - timedelta(hours=24)
-    print(end_date)
-    print(start_date)
+
+    current_ind = Instance_snap_ind.objects.last()  # most recent snapshot 
+
     
-    current_ind = Instance_snap_ind.objects.last()
-    print(current_ind)
-    
-    snapped_instances = snapshot_instance.objects.filter(instance_snap_index_obj=current_ind, cloud_provider = 'OpenStack')
-    print(snapped_instances)
-    snapped_instances_aws = snapshot_instance.objects.filter(instance_snap_index_obj=current_ind, cloud_provider = 'AWS')
+    snapped_instances = snapshot_instance.objects.filter(instance_snap_index_obj=current_ind, cloud_provider = 'OpenStack') ## openstack instances
+    snapped_instances_aws = snapshot_instance.objects.filter(instance_snap_index_obj=current_ind, cloud_provider = 'AWS') ## aws instances
 
     client = boto3.client(
-        'ce', 
-        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-        aws_secret_access_key='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',
-        region_name = 'us-east-1')
+    'ce',
+    aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
+    aws_secret_access_key='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',
+    region_name = 'us-east-1'
+    )
 
-    for instance_aws in snapped_instances_aws:
+    for instance_aws in snapped_instances_aws: ## aws daily and updating total cost
         
         response = client.get_cost_and_usage(
             TimePeriod={
@@ -495,7 +541,7 @@ def get_snapshots():
         current_instance.save()
 
 
-    for instance in snapped_instances:
+    for instance in snapped_instances: ## openstack dialy cost and updating total cost 
             allocated_cpu = 0
             allocated_cpu += instance.CPU
             daily_cost = allocated_cpu*Decimal(.69)
@@ -538,14 +584,7 @@ def create_time_bill(params):
         if snapshot.instance_name not in snapshots_instance:
             snapshots_instance[snapshot.instance_name] = []
         snapshots_instance[snapshot.instance_name].append(snapshot)
-
-    # Get the most recent and earliest snapshots for each instance -- this is so we can then find the cost
-    most_recent_snapshots = {}
-    earliest_snapshots = {}
-    for instance_name, instance_snapshots in snapshots_instance.items():
-        sorted_snapshots = sorted(instance_snapshots, key=lambda s: s.instance_snap_index_obj.timestamp)  ## sorts the list by their timestamps
-        earliest_snapshots[instance_name] = sorted_snapshots[0] ## first entry
-        most_recent_snapshots[instance_name] = sorted_snapshots[-1] ## last entry 
+  
 
     # to get the total cost within the specified range
     total_cost_range = {} 
@@ -556,8 +595,7 @@ def create_time_bill(params):
                 daily_cost_in_range += snapshot.daily_cost
         total_cost_range[instance_name] = daily_cost_in_range
 
-    print(total_cost_range)
-
+  
 
     bill_details = {}
     for index in snapshot_indices:
@@ -577,56 +615,6 @@ def create_time_bill(params):
                 } 
     
     return bill_details 
-        
-def get_snapshot_obj_bill(times):
-    cost = {}
-
-
-    snapped_instances_time = snapshot_instance.objects.filter(instance_snap_index_obj= times['snapshot_user_time_start'])
-
-    snapped_instances_time_end = snapshot_instance.objects.filter(instance_snap_index_obj= times['snapshot_user_time_end'])
-    print(snapped_instances_time, ' start')
-    print(snapped_instances_time_end, ' end' )
-
-    #new_dict = {}
-    ## what instaces exit in end that dont exixt in start -- so they exixt now but not previsously
-  #  snapped_instances_time_end_names = [instance.instance_name for instance in snapped_instances_time_end]
-  #  snapped_instances_time_names = [instance.instance_name for instance in snapped_instances_time]
-  #  filter_instance_names = [instance_name for instance_name in snapped_instances_time_end_names if instance_name not in snapped_instances_time_names]
-
-
-    for instance_end in snapped_instances_time_end:
-        cost[instance_end.instance_name] = instance_end.total_cost
-    print(cost)
-   
-    for instance in snapped_instances_time:
-        cost_start=instance.total_cost
-    
-        try:
-            cost[instance.instance_name] = cost[instance.instance_name] - cost_start
-        except KeyError:
-            
-            snapped_instance_mostrecent = snapshot_instance.objects.filter(instance_name = instance.instance_name).last()
-
-            cost[instance.instance_name] = snapped_instance_mostrecent.total_cost - cost_start
-
- #   for instance_name in filter_instance_names:
-      #  first_instance_snapshot = snapshot_instance.objects.filter(instance_name = instance.instance_name).first()
-  #  print(cost)
-        #cost[instance_name]= cost[instance_name] - first_instance_snapshot.total_cost
- #   print(cost, ' all cost')
-
-
-    every_time =   Instance_snap_ind.objects.filter(timestamp__range=(start_date, end_date_str))
-    total_cost = get_snapshot_obj_bill(times)
-    print(total_cost)
-
-
-    bill_details = {}
-  
-
-
-    return cost
 
 
 

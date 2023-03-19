@@ -1,5 +1,38 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
+<div class="header_Billow">
   <h1>Welcome to Billow!</h1>
+</div>
+
+  <div class="description">
+    <p>
+      Billow is a cloud tool that provides an aggregated view for cloud billing. 
+    </p>
+    <p>
+      Billow calculates the billing for OpenStack instances and retrieves the billing information from cost explorer for AWS instances. 
+    </p>
+    <p>
+      Billow renders this information to a webpage, combining the information into one view. 
+    </p>
+
+
+    <p>
+      Billow only renders information to the user depending on their permissions, and the user can only see instance information relevant to them.
+    </p>
+
+    <p>
+      Billow has the ability to create, delete, start and stop instances on AWS and OpenStack from one platform.
+    </p>
+  </div>
+
+
+
+
+  <img src="{% static 'Logo\billow_logo_medium.png' %}" alt="Billow Logo" class="logo">
+
+
+
+
 {% endblock %}

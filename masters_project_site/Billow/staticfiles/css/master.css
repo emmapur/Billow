@@ -97,7 +97,7 @@ table.-table tfoot td {
 }
 
 .list-table {
-  width: 100%;
+  width: 100%; 
   border-collapse: collapse;
   background-color: #fff;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
@@ -106,7 +106,6 @@ table.-table tfoot td {
   height: 100%;
   white-space: nowrap;
   word-wrap: break-word;
-
   float: right;
 }
 
@@ -258,4 +257,21 @@ ul.form-control-list li {
   padding: 0px;
   margin: 0px;
   font-size: 13px
+}
+
+.btn-info{
+  background-color: #ba9ddd !important;
+  margin-top: 10px !important;
+  border-color: #ba9ddd !important;
+}
+
+
+.description{
+  font-family: cursive;
+  font-size: x-large;
+  margin-top: 2%;
+}
+
+.header_Billow{
+  margin-top: -2%;
 }

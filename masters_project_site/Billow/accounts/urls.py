@@ -3,6 +3,7 @@ from django.contrib.auth import views as auth_views
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import path
 
 app_name = 'accounts'
 
@@ -16,7 +17,11 @@ urlpatterns = [
     re_path(r'^created_bill/$', views.create_bill, name='create_bill'),
     re_path(r'^instance_list/$', views.instance_list, name='instance_list'),
     re_path(r'^instance_details/$', views.instance_details, name='instance_details'),
-    re_path(r'^delete_instance/$', views.delete_instance, name='delete_instance'),
+    re_path(r'^instance_actions/$', views.instance_actions, name='instance_actions'),
+    re_path(r'sync-state/$', views.sync_state_view, name='sync_state_view'),
+
+    
+
  
   
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

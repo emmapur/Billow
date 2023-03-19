@@ -7,7 +7,11 @@
 
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/master.css' %}">
+    <script src="{% static 'jquery/jquery.min.js' %}"></script>
 
+   
+
+    
     
     
     <!-- Latest compiled and minified CSS -->
@@ -25,7 +29,10 @@
   </head>
   <body>
     <nav class="nav-cool" role="navigation" id="navbar">
-      <a class="logo" href="{% url 'home' %}">Billow</a>
+      <a href="{% url 'home' %}">
+        <img src="{% static 'Logo\billow_logo_small.png' %}" alt="Billow Logo" class="logo">
+    </a>
+    
       <div class="main_menu_side">
         {% if user.is_authenticated %}
           <a href="{% url 'accounts:create_instance_form' %}">Create Instance<a/>

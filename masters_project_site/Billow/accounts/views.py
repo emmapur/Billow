@@ -13,10 +13,12 @@ from django.contrib import messages
 from .decorators import users_allowed
 from django.db.models import Exists, OuterRef
 
+import logging
 
 
 
-# Create your views here.
+
+# Create your views here.+
 class Login(CreateView):
     form_class = forms.UserCreateForm
     success_url = reverse_lazy("login")
@@ -25,14 +27,14 @@ class Login(CreateView):
 
 @csrf_exempt
 def instance_list(request):
-   
+    print('USER', request.user.username)
     team_name = UserProfile.objects.get(user_name = request.user).team_name
     program_name = UserProfile.objects.get(user_name = request.user).program_name
     allowed_roles = ['admin']
     program_roles = ['program_manager']
     context = {"columns": ['Cloud Provider', 'Program', 'Team', 'Flavor',
                                'CPU (Total)', 'RAM (GB)',
-                               'Storage (GB)', 'State', 'Created At', 'Total Cost']}
+                               'Storage (GB)', 'State', 'Created At', 'Total Cost to Date']}
 
     if request.user.groups.exists():
         group = request.user.groups.all()[0].name
@@ -54,6 +56,9 @@ def instance_list(request):
 
 @csrf_exempt
 def instance_details(request):
+
+    
+
     instance_name = request.GET.get('instance_details')
 
     context = {"columns": ['Instance Name', 'Cloud Provider', 'Program', 'Team', 'Flavor',
@@ -70,13 +75,25 @@ def instance_details(request):
     
     return render(request, 'instance_details.html', context)
 
-
+@csrf_exempt
+def instancections(request):
+     sync_aws_cloud()
+    
+     return HttpResponseRedirect(reverse('accounts:instance_list'))
 
 @csrf_exempt
-def delete_instance(request):
-  
+def instance_actions(request):
+    user = request.user.username
+    print(user)
+    allowed_roles = ['admin', 'program_manager']
+
+
+    logger = logging.getLogger(__name__)
+
+
     cloud_provider = request.POST.get('cloud_prov_name')
     instance_id = request.POST.get('id_instance')
+    state = request.POST.get('state')
 
     print(f"cloud_provider: {cloud_provider}")
     print(f"instance_id: {instance_id}")
@@ -87,22 +104,84 @@ def delete_instance(request):
         'aws_instance_id':instance_id,
         'id_instance':instance_id
      }
-    
-    try:
+    if request.user.groups.exists():
+        group = request.user.groups.all()[0].name
+    if group in allowed_roles:
+
+        if 'delete' in request.POST:
+                try:
+                    
+                    if (cloud_provider == 'OpenStack'):
+                        delete_openstack_instance(instance_id)
+                    else:
+                        delete_an_instance(params)
+
+                except Exception as e:
+                    print ("||view||delete_instance error:" + str(e))
+                    messages.error(request, "Instance request failed to delete. Error: " + str(e))
+                    return HttpResponseRedirect(reverse('accounts:instance_list'))
+                messages.success(request, "Instance deleted successfully!")
+                logger.info('Instance Deleted {} || By User {} || Time {}' .format(instance_id, user, datetime.now()))
+                return HttpResponseRedirect(reverse('accounts:instance_list'))
+
         
-        if (cloud_provider == 'OpenStack'):
-            delete_openstack_instance(instance_id)
-        else:
-            delete_an_instance(params)
+            
+        if 'stop' in request.POST:
+           on_states = ['ACTIVE', 'running']
+           if state in on_states:
+                try:
+                    if (cloud_provider == 'OpenStack'):
+                            stop_openstack_instance(instance_id)
+                    else:
+                        stop_an_instance(params)
+
+                except Exception as e:
+                        print ("||view||delete_instance error:" + str(e))
+                        messages.error(request, "Instance request failed to stop. Error: " + str(e))
+                        return HttpResponseRedirect(reverse('accounts:instance_list'))
+                messages.success(request, "Instance stopped successfully!")
+                logger.info('Instance Stopped {} || By User {} || Time {}' .format(instance_id, user, datetime.now()))
+                return HttpResponseRedirect(reverse('accounts:instance_list'))
+           else:
+                messages.success(request, "Instance already stopped!")
+                
+                return HttpResponseRedirect(reverse('accounts:instance_list'))
+
+        if 'start' in request.POST:
+            off_states =['stopped', 'SHUTOFF']
+            if state in off_states:
+                try:
+
+                    if (cloud_provider == 'OpenStack'):
+                            start_openstack_instance(instance_id)
+                    else:
+                    
+                        start_an_instance(params)
 
 
-    except Exception as e:
-     print ("||view||delete_instance error:" + str(e))
-     messages.error(request, "Instance request failed to delete. Error: " + str(e))
-     return HttpResponseRedirect(reverse('accounts:instance_list'))
-    
-    messages.success(request, "Instance deleted successfully!")
-    return HttpResponseRedirect(reverse('accounts:instance_list'))
+                except Exception as e:
+                        print ("||view||delete_instance error:" + str(e))
+                        messages.error(request, "Instance failed to start. Error: " + str(e))
+                        return HttpResponseRedirect(reverse('accounts:instance_list'))
+                messages.success(request, "Instance started successfully!")
+                logger.info('Instance Started {} || By User {} || Time {}' .format(instance_id, user, datetime.now()))
+                return HttpResponseRedirect(reverse('accounts:instance_list'))
+            else:
+                 messages.success(request, "Instance is already running!")
+                 return HttpResponseRedirect(reverse('accounts:instance_list'))
+
+
+    else:
+        messages.error(request, "You do not have permissions for this action instance")
+        return HttpResponseRedirect(reverse('accounts:instance_list'))
+
+
+
+
+
+
+
+
 
 
 
@@ -110,7 +189,7 @@ def delete_instance(request):
 
 
 @csrf_exempt
-@users_allowed(allowed_roles=['admin'])
+@users_allowed(allowed_roles=['admin', 'program_manager'])
 def create_new_instance_form(request):
     cloud_providers_list = Cloud_Provider.objects.all()
     flavor_list = Flavor.objects.all()
@@ -121,7 +200,6 @@ def create_new_instance_form(request):
     team_name_list = Team.objects.all()
     program_name_list = Program.objects.all()
     users_list = UserProfile.objects.all()
-
     Openstack_image_list = Op_image.objects.all()
 
     context = {
@@ -134,21 +212,21 @@ def create_new_instance_form(request):
         'team_name_list' : team_name_list,
         'program_name_list' : program_name_list,
         'users_list' : users_list,
-    
         'Openstack_image_list': Openstack_image_list,
 
     }
-
 
     return render(request, 'create_instance_form.html', context)
 
 
 
-
-
-
 @csrf_exempt
 def create_new_instance(request):
+
+    user = request.user.username
+    print(user)
+
+    logger = logging.getLogger(__name__)
 
     cloud_provider = request.POST.get('cloud_prov_name')
     flavor = request.POST.get('flavor_name')
@@ -159,18 +237,11 @@ def create_new_instance(request):
     program  = request.POST.get('program_name')
     contact = request.POST.get('contact_name')
     users =  request.POST.get('username')
- 
     Openstack_image_name = request.POST.get('Image_name_op')
-
     Openstack_image_id = Op_image.objects.values_list('Image_ID', flat=True).get(image_name=Openstack_image_name)
-
     flavor_name = request.POST.get('flavor_name') 
     flavor_id = Flavor.objects.values_list('id_flavor', flat=True).get(flavor_name=flavor_name)
     storage = Flavor.objects.values_list('Storage_GB', flat=True).get(flavor_name=flavor_name)
-
- #   instance_list = Instance.objects.filter(instance_name=instance_name).values('id_instance', '
-    
-   
 
     params = {
         'cloud_provider':cloud_provider,
@@ -201,7 +272,7 @@ def create_new_instance(request):
      print ("||view||create_new_instance error:" + str(e))
      messages.error(request, "Instance request failed to submit. Error: " + str(e))
      return HttpResponseRedirect(reverse('accounts:create_instance_form'))
-    
+    logger.info('Instance Created {} || By User {} || Time {}' .format(instance_name, user, datetime.now()))
     messages.success(request, "Instance created successfully!")
     return HttpResponseRedirect(reverse('accounts:instance_list'))
 
@@ -213,7 +284,9 @@ def create_new_instance(request):
 
 def user_instances(request):
 
+    print('USER', request.user.username)
     team_name = UserProfile.objects.get(user_name = request.user).team_name
+  
     program_name = UserProfile.objects.get(user_name = request.user).program_name
 
     allowed_roles = ['admin']
@@ -285,6 +358,15 @@ def create_bill(request):
     }
 
     return render(request, 'created_bill.html', context)
+
+@csrf_exempt
+def sync_state_view(request):
+
+    sync_aws_state()
+    sync_state()
+
+    return HttpResponse('states synced')
+
 
 
 

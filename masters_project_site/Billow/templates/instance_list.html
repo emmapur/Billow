@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block content %}
 
 
@@ -52,6 +53,12 @@
 {% endfor %}
  </table>
 
-
+ <script src="{% static 'jquery/jquery.min.js' %}"></script>
+ <script>
+   $(document).ready(function() {
+     // Make GET request to /sync-state/ URL
+     $.get("{% url 'accounts:sync_state_view' %}");
+   });
+ </script>
   	                      		 <!-- Example split danger button -->
 {% endblock %}
