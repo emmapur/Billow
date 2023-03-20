@@ -19,8 +19,7 @@ urlpatterns = [
     re_path(r'^instance_details/$', views.instance_details, name='instance_details'),
     re_path(r'^instance_actions/$', views.instance_actions, name='instance_actions'),
     re_path(r'sync-state/$', views.sync_state_view, name='sync_state_view'),
-
-    
+    re_path(r'ssync_cloud/$', views.sync_cloud, name='sync_cloud'),
 
  
   

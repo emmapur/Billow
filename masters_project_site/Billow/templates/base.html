@@ -8,10 +8,6 @@
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/master.css' %}">
     <script src="{% static 'jquery/jquery.min.js' %}"></script>
-
-   
-
-    
     
     
     <!-- Latest compiled and minified CSS -->
@@ -38,7 +34,9 @@
           <a href="{% url 'accounts:create_instance_form' %}">Create Instance<a/>
           <a href="{% url 'accounts:instance_list' %}" >Instances<a/>
           <a href="{% url 'accounts:billing' %}" >Billing<a/>
+          <a href="{% url 'accounts:sync_cloud' %}" >Sync Cloud<a/> 
           <a href="{% url 'accounts:logout' %}">Log Out<a/>
+          
         {% else %}
           <a href="{% url 'accounts:login' %}">Log in</a>
         {% endif %}

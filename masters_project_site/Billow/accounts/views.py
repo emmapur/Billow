@@ -1,21 +1,14 @@
-from django.contrib.auth import login, logout
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from . import forms
-from django.views.generic import TemplateView
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, Http404, HttpResponseRedirect, \
-    JsonResponse, StreamingHttpResponse
-from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404, reverse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, reverse
 from django.views.decorators.csrf import csrf_exempt
 from .models import *
 from .Cloud_utils import*
 from django.contrib import messages
 from .decorators import users_allowed
-from django.db.models import Exists, OuterRef
-
 import logging
-
-
 
 
 # Create your views here.+
@@ -25,6 +18,7 @@ class Login(CreateView):
     template_name = "accounts/login.html"
 
 
+## showing the list of instances in the db 
 @csrf_exempt
 def instance_list(request):
     print('USER', request.user.username)
@@ -53,21 +47,15 @@ def instance_list(request):
     return render(request, 'instance_list.html', context)
 
 
-
+## showing more details of the instance based on url selected
 @csrf_exempt
 def instance_details(request):
-
-    
-
     instance_name = request.GET.get('instance_details')
-
     context = {"columns": ['Instance Name', 'Cloud Provider', 'Program', 'Team', 'Flavor',
                                'CPU (Total)', 'RAM (GiB)',
                                'Storage (GiB)', 'State', 'Created At']}
 
     instance_list = Instance.objects.filter(instance_name=instance_name).values('id_instance', 'Image_op__image_name', 'flavor__Ram_GB', 'flavor__flavor_name', 'flavor__CPU', 'instance_name', 'users__user_name', 'contact', 'cloud_provider__cloud_prov_name','team__team_name', 'program__program_name', 'instance_name','KeyName__key_name', 'Image_aws__Image_name', 'State', 'flavor__Storage_GB')
-
-
     context={
 
         'data' : instance_list,
@@ -75,12 +63,8 @@ def instance_details(request):
     
     return render(request, 'instance_details.html', context)
 
-@csrf_exempt
-def instancections(request):
-     sync_aws_cloud()
-    
-     return HttpResponseRedirect(reverse('accounts:instance_list'))
 
+##  start, stop, delete and depending on user logged in 
 @csrf_exempt
 def instance_actions(request):
     user = request.user.username
@@ -177,17 +161,7 @@ def instance_actions(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+## rendering the conetent the form 
 @csrf_exempt
 @users_allowed(allowed_roles=['admin', 'program_manager'])
 def create_new_instance_form(request):
@@ -219,13 +193,12 @@ def create_new_instance_form(request):
     return render(request, 'create_instance_form.html', context)
 
 
-
+## getting user inputted values and passing into other functions 
 @csrf_exempt
 def create_new_instance(request):
 
     user = request.user.username
     print(user)
-
     logger = logging.getLogger(__name__)
 
     cloud_provider = request.POST.get('cloud_prov_name')
@@ -278,16 +251,11 @@ def create_new_instance(request):
 
 
 
-
-
-
-
 def user_instances(request):
 
     print('USER', request.user.username)
-    team_name = UserProfile.objects.get(user_name = request.user).team_name
-  
-    program_name = UserProfile.objects.get(user_name = request.user).program_name
+    team_name = UserProfile.objects.get(user_name = request.user).team_name ## getting the users team
+    program_name = UserProfile.objects.get(user_name = request.user).program_name  ## getting the users program
 
     allowed_roles = ['admin']
     program_roles = ['program_manager']
@@ -296,26 +264,17 @@ def user_instances(request):
         group = request.user.groups.all()[0].name
 
     if group in allowed_roles:
-         
-
          instances_name = snapshot_instance.objects.values('instance_name').distinct()
-      
     elif group in program_roles:
-        
         instances_name = snapshot_instance.objects.filter(program =program_name ).values('instance_name').distinct()
-     
-     
     else:
         instances_name = snapshot_instance.objects.filter(team =team_name ).values('instance_name').distinct()
-        print(instances_name)
-
     return instances_name
 
+
+
 def create_bill_form(request):
-
     return render(request, 'billing.html')
-
-
 
 
 
@@ -325,7 +284,7 @@ def create_bill(request):
     end_date = request.POST.get('end_date')
   
 
-    user_insatnces = user_instances(request)
+    user_insatnces = user_instances(request)  ## get only the instance associated with user logged in
    
 
     params = {
@@ -336,18 +295,22 @@ def create_bill(request):
        
     }
 
-    bill_details = create_time_bill(params)
+
+    try:
+            bill_details = create_time_bill(params)
+    except Exception as e:
+            print ("||view||billing form error:" + str(e))
+            messages.error(request, "Billng request failed Error: " + str(e))
+            return render(request, 'billing.html')
 
     bill = {}
     total = 0
     created_bill = bill_details
-    print(created_bill)
     bill['data'] = created_bill
-
     for instance_name in bill['data']:
         instance_total_cost = bill_details[instance_name]['total_cost']
 
-        total += float(instance_total_cost)
+        total += float(instance_total_cost) ## adding up the costs
     new_total = round(total, 2)
 
     context={
@@ -359,6 +322,8 @@ def create_bill(request):
 
     return render(request, 'created_bill.html', context)
 
+
+
 @csrf_exempt
 def sync_state_view(request):
 
@@ -368,6 +333,13 @@ def sync_state_view(request):
     return HttpResponse('states synced')
 
 
+## dev purposes 
+@csrf_exempt
+def sync_cloud(request):
 
+    sync_aws_cloud()
+    synch_op_cloud()
+
+    return HttpResponseRedirect(reverse('accounts:instance_list'))
 
 

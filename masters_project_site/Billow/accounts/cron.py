@@ -26,7 +26,7 @@ class cronjob_third(CronJobBase):
     RUN_AT_TIMES = ['06:00']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
-    code = sync_state()    # a unique code
+    code = sync_aws_cloud()    # a unique code
 
     def do(self):
         print('test1')
@@ -35,7 +35,7 @@ class cronjob_fourth(CronJobBase):
     RUN_AT_TIMES = ['06:00']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
-    code = sync_aws_state()    # a unique code
+    code = synch_op_cloud()    # a unique code
 
     def do(self):
         print('test4')

@@ -1,42 +1,23 @@
 import boto3
-from botocore.config import Config
 from .models import *
 from IPython.core.interactiveshell import InteractiveShell
 InteractiveShell.ast_node_interactivity = "all"
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-import sys
-import keystoneauth1
-import neutron
-    
 import pytz
-
 from decimal import Decimal
-
 import hashlib
-# sys.path.append('/home/epuremm/meteo') 
-# import os
-# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'meteo.settings') 
-# if 'setup' in dir(django):
-
-#     django.setup() 
-#from typhoon.models import *
-from django.core.exceptions import MultipleObjectsReturned
-#from typhoon.services import projectservice as ps
-from keystoneauth1.identity import v2,v3
+from keystoneauth1.identity import v3
 from keystoneauth1 import session
-from keystoneclient import client as ksClient, utils, exceptions as keystoneExceptions
+from keystoneclient import client as ksClient
 from novaclient import client as novaClient, exceptions as novaExceptions
 from cinderclient import client as cinderClient, exceptions as cinderExceptions, utils as cinderUtils
-
 from neutronclient.v2_0 import client as neutronClient
 from heatclient import client as heatClient
 from glanceclient import client as glanceClient
 from datetime import timedelta,date,datetime
 
 # create code for creating instance
-
-
 # creating aws instance
 def get_client_aws():
 
@@ -49,8 +30,7 @@ def get_client_aws():
 
     return(client)
 
-
-
+# creating aws instance
 def create_aws_instance(params):
 
 
@@ -94,6 +74,7 @@ def create_aws_instance(params):
     launch_time = instances[0].launch_time
     sync_aws_state()
     
+    ## saving to db 
     Instance_object = Instance(
         cloud_provider= Cloud_Provider.objects.get(cloud_prov_name = params['cloud_provider']),
         flavor=Flavor.objects.get(flavor_name=params['flavor']),
@@ -110,12 +91,11 @@ def create_aws_instance(params):
         total_cost = 0
     )
 
-    #Instance_object.flavor = Flavor.objects.get(flavor_name=params['flavor'])
     Instance_object.save()
     sync_aws_state()
 
 
-
+# deleteing aws instance
 def delete_an_instance(params):
 
     client = boto3.client(
@@ -131,15 +111,15 @@ def delete_an_instance(params):
 
     delete_db_instance(params['aws_instance_id'])
 
+
+# deleting from db
 def delete_db_instance(instance_id):
     print(instance_id)
     Instance_obj = Instance.objects.get(id_instance=instance_id)
     Instance_obj.delete()
 
 
-
-
-
+# stopiing aws instance
 def stop_an_instance(params):
 
     client = boto3.client(
@@ -153,6 +133,7 @@ def stop_an_instance(params):
 	    InstanceIds=[params['aws_instance_id']],
 )
 
+# starting aws instance
 def start_an_instance(params):
 
     client = boto3.client(
@@ -171,10 +152,8 @@ def start_an_instance(params):
 # create openstack instnace
 
 
-
 def get_clients(project_name):
     
-    #     cloud = Cloud.objects.get(cloud_name="6b")
     auth_url = 'http://192.168.1.23/identity/v3'
     username='admin'
     password='secret'
@@ -198,11 +177,6 @@ def create_openstack_instance(params):
     clients = get_clients('admin')
     
     nova = clients['nova']
-    cinder = clients['cinder']
-    glance = clients['glance']
-    neutron = clients['neutron']
-    keystone = clients['keystone']
-
 
     nova.servers.create(name = params['instance_name'], image = params['openstack_image_id'], flavor = params['openstack_flavor_id'],  nics = [{'net-id': '028ec515-365c-418d-b026-66760088fad5'}])
     instance_list = []
@@ -247,9 +221,7 @@ def create_openstack_instance(params):
     Instance_object.save()
 
 
-#def delete_openstack_instance(params):
-
-
+# deleting openstack instance
 def delete_openstack_instance(instance_id):
 
   clients = get_clients('admin')
@@ -259,13 +231,14 @@ def delete_openstack_instance(instance_id):
 
   delete_db_instance_op(instance_id)
 
+# deleting it from db
 def delete_db_instance_op(instance_id):
     print(instance_id)
     Instance_obj = Instance.objects.get(id_instance=instance_id)
     Instance_obj.delete()
 
 
-
+# stopping an op instance
 def stop_openstack_instance(instance_id):
 
   clients = get_clients('admin')
@@ -273,7 +246,7 @@ def stop_openstack_instance(instance_id):
   nova = clients['nova']
   nova.servers.stop(instance_id)
 
-
+# starting an op instance
 def start_openstack_instance(instance_id):
 
   clients = get_clients('admin')
@@ -282,18 +255,14 @@ def start_openstack_instance(instance_id):
   nova.servers.start(instance_id)
 
 
-
+##### syncing clouds here aws and openstack
 
 def synch_op_cloud():
-    #Cloud_Provider=OpenStack
     instance_db = Instance.objects.filter(cloud_provider__cloud_prov_name ='OpenStack').values_list('instance_name', flat=True)
-
     clients = get_clients('admin')
     nova = clients['nova']
-
     instances = nova.servers.list()
     
-
     # Add new instances to the local database
     instances_to_add = [server for server in instances if server.name not in instance_db]
 
@@ -301,22 +270,16 @@ def synch_op_cloud():
         instance_name_add = server.name
         flavor_id = server.flavor['id']
         flavor_name = Flavor.objects.filter(id_flavor=flavor_id).values_list('flavor_name', flat=True).first()
-     
         launch = server.created
         state = server.status
         image = server.image
-        for id in image:
-            image_id = image['id']
-
-
-        print(image_id, launch, flavor_id)
-
+        instance_image_id = image['id']
         instance_id = server.id
 
         Instance_object = Instance(
             cloud_provider=Cloud_Provider.objects.get(cloud_prov_name ='OpenStack'),
             flavor=Flavor.objects.get(flavor_name =flavor_name),
-            Image_op=Op_image.objects.get(Image_ID=image_id),
+            Image_op=Op_image.objects.get(Image_ID=instance_image_id),
             instance_name=instance_name_add,
             id_instance=instance_id,
             launch_time = launch,
@@ -336,17 +299,13 @@ def sync_aws_cloud():
 
         instance_db = Instance.objects.filter(cloud_provider__cloud_prov_name='AWS').values_list('instance_name', flat=True)
 
-
-
         resource = boto3.resource(
         'ec2',
         aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
         aws_secret_access_key='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',
         region_name = 'us-east-1'
         )
-
         instances = resource.instances.all()
-
         # Add new instances to the local database
         instances_to_add = []
     
@@ -385,27 +344,6 @@ def sync_aws_cloud():
         instances_to_delete = set(instance_db) - instance_names
         for instance_name in instances_to_delete:
             Instance.objects.filter(instance_name=instance_name).delete()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
