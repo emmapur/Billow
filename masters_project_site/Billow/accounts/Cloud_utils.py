@@ -23,8 +23,8 @@ def get_client_aws():
 
     client = boto3.client(
         'ec2',
-        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-        aws_secret_access_key='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',
+        aws_access_key_id='XXXXX',
+        aws_secret_access_key='XXXXXX',
         region_name = 'us-east-1'
         )
 
@@ -36,8 +36,8 @@ def create_aws_instance(params):
 
     resource = boto3.resource(
         'ec2',
-        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-        aws_secret_access_key='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',
+        aws_access_key_id='XXXXX',
+        aws_secret_access_key='XXXXX',
         region_name = 'us-east-1'
     )
 
@@ -100,8 +100,8 @@ def delete_an_instance(params):
 
     client = boto3.client(
         'ec2',
-        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-        aws_secret_access_key='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',
+        aws_access_key_id='XXXXX',
+        aws_secret_access_key='XXXXX',
         region_name = 'us-east-1'
         )
 
@@ -124,8 +124,8 @@ def stop_an_instance(params):
 
     client = boto3.client(
         'ec2',
-        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-        aws_secret_access_key='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',
+        aws_access_key_id='XXXX',
+        aws_secret_access_key='XXXX',
         region_name = 'us-east-1'
         )
 
@@ -138,8 +138,8 @@ def start_an_instance(params):
 
     client = boto3.client(
         'ec2',
-        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-        aws_secret_access_key='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',
+        aws_access_key_id='XXXX',
+        aws_secret_access_key='XXXXXX',
         region_name = 'us-east-1'
         )
 
@@ -301,8 +301,8 @@ def sync_aws_cloud():
 
         resource = boto3.resource(
         'ec2',
-        aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-        aws_secret_access_key='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',
+        aws_access_key_id='XXXXX',
+        aws_secret_access_key='XXXXX',
         region_name = 'us-east-1'
         )
         instances = resource.instances.all()
@@ -431,8 +431,8 @@ def get_snapshots():
 
     client = boto3.client(
     'ce',
-    aws_access_key_id='AKIAQAS2UWXQJQVWZRSC',
-    aws_secret_access_key='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',
+    aws_access_key_id='XXXXXXXXXX',
+    aws_secret_access_key='XXXXXXXX',
     region_name = 'us-east-1'
     )
 
